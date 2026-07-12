@@ -1,0 +1,1034 @@
+Yash Bambhroliya
+
++91-7990071744 yashbambhroliya1 gmail.com GitHub: LinkedIn: 
+
+---
+
+ PROFESSIONAL SUMMARY
+
+AI Engineer with production experience across the GenAI stack: LLM fine-tuning and quantization, vLLM inference serving, RAG, LLM evaluation, AI agents, and diffusion-based media generation. Works directly with the CEO and CTO at a product company to set AI strategy and ship features with measurable business impact. Published an open fine-tuned model on Hugging Face together with an LLM-as-judge evaluation.
+
+---
+
+ WORK EXPERIENCE
+
+ AI Engineer , Nextbase Solutions 01/2025 - Present 
+
+- Built the LLM serving pipeline for a conversational AI platform: a 4-bit AWQ-quantized domain model self-hosted on vLLM (RunPod GPU cloud) behind an OpenAI-compatible API, with three-tier provider failover and token-budgeted context windowing. Benchmarked on a 24 GB GPU: 70-75% less memory, 2-3x faster token generation, 2-4x lower inference cost, and 2.5-4x higher batch parallelism, with under 2% perplexity degradation.
+- Raised average engagement time per active user by 122% (11m 32s to 25m 35s within three weeks of deployment, measured in Firebase Analytics) by deploying a domain-tuned conversational model with persona-conditioned system prompts across 12 character archetypes.
+- Built and shipped the company's generative media tools: image enhancement and upscaling (RealESRGAN, TiledDiffusion), background removal (BRIA RMBG-2.0), image generation on SVDQuant INT4-quantized Flux.1 models, and video generation on Wan 2.1/2.2 14B with step-distilled LoRAs and RIFE frame interpolation. The tools run as Dockerized ComfyUI workflows on RunPod serverless GPUs, use a custom node library for S3/CDN delivery and per-user generation tracking, and connect to a Node.js backend. They now account for over 30% of company revenue.
+- Co-built a multi-provider LLM gateway (Node.js/TypeScript) that unifies 11 providers behind Anthropic- and OpenAI-compatible APIs, with per-key concurrency limits,
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ sticky routing that preserves prompt caches, and gateway-side context compression that cuts tool-output tokens by 50-74%. Also worked on multi-tenant AI-assistant hosting with usage-metered billing.
+- Built the MCP connector infrastructure for the multi-tenant AI-assistant hosting platform: a catalog of installable MCP servers provisioned into per-user containers (npm, pip, and remote-hosted), three authentication flows (OAuth with redirect/callback and PKCE, hosted-MCP, and API-key), and credential storage with per-connection environment injection. Worked directly with the platform's external enterprise clients.
+- Set the technical and business strategy for AI automation in partnership with the CEO and CTO, which cut operational costs by 60% and increased product scalability by 35%.
+- Designed and deployed AI agents and RAG pipelines (LangChain, LlamaIndex) for three departments (SEO, UI/UX, Marketing), including a four-phase video-production planning agent on Gemini (analysis, web research, tool selection, prompt generation) and a market-intelligence agent that uses Qdrant vector search to find competitive feature gaps and report them automatically.
+- Ran internal prompt-engineering workshops and set up AI-assisted workflows now used across teams.
+
+ Software Engineer (Computer Vision Robotics) , Techno Smart Diamond Solution 06/2024 - 12/2024 
+
+- Built the vision-driven control core of an autonomous diamond-polishing robot: registered scanned rough-diamond meshes against the target cut geometry to estimate facet poses, computed each facet's angular deviation in a Cartesian reference frame, and streamed corrections to the robot's PLC over Ethernet through a custom pybind11 C++/Python bridge. Raised operational efficiency by 45%, working with a Taiwan-based robotics engineer on hardware integration.
+- Wrote the mesh-registration pipeline (NumPy, meshlib) that aligns reconstructed rough-diamond models onto the computed target geometry (centering, rotation-axis estim
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ation, plane alignment) to produce facet-by-facet material-removal targets for the robot.
+- Built Pizzomatic, a food-ordering web application with Next.js, FastAPI, and Stripe payments.
+
+ Software Engineering Intern (Computer Vision) , Techno Smart Diamond Solution 12/2023 - 05/2024 
+
+- Built the facet-line detection stage of the scanning pipeline with unsupervised machine learning: DBSCAN clustering plus RANSAC robust regression (scikit-learn) over Canny/LoG edge maps, chosen after benchmarking Hough and Radon transform baselines on noisy diamond imagery.
+- Automated the 3D reconstruction of rough diamonds from 2D industrial camera and laser scans (OpenCV, real-time capture pipeline), cutting reconstruction error to 5 microns.
+- Sped up the reconstruction pipeline from 3 minutes to 30 seconds per unit, an 85% improvement.
+
+ Research Intern , Uka Tarsadia University (CGPIT) in collaboration with CIT Kokrajhar 05/2023 - 06/2023 
+ Guided by Dr. Anshuman Kalla (CGPIT, UTU) and Dr. Pranay Kumar Singh (CIT Kokrajhar) 
+
+- Built a blockchain-based multimedia messaging DApp for educational institutions (ReactJS, Node.js, Solidity, Web3.js) for secure peer-to-peer communication.
+- Integrated IPFS for decentralized file sharing, which removed storage costs, and added end-to-end encryption.
+
+---
+
+ EDUCATION
+
+ Bachelor of Technology in Information Technology , Uka Tarsadia University 06/2020 - 06/2024 
+ Gujarat, India CGPA: 8.01 
+
+---
+
+ CERTIFICATES
+
+- ACM India Winter School on "Optimization for Machine Learning and Operations Research" hosted by Indian Institute of Technology Goa (IIT Goa)
+ 
+- Coursera: Machine Learning by Stanford University DeepLearning.AI
+ 
+- Udacity Nanodegree Course: AI Programming with Python
+ 
+- Udacity Nanodegree Course: AWS Machine Learning Fundamentals
+ 
+- Grand Finale of SSIP Azadi ka Amrit Mahotsav Hackathon - 2022
+ 
+- Regional Round of SSIP Azadi ka Amrit Mahotsav Hackathon - 2022
+ 
+- Research Internship Certificate
+ 
+- Gujarat Council on Science
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ and Technology (GUJCOST) sponsored five-day online Short Term Training Program (SITI) "Blockchain Technology Its Applications"
+ 
+- University Internal Hackathon
+ 
+
+---
+
+ SKILLS
+
+- Core: AI Engineering, Machine Learning, Full Stack Development, Generative AI, Blockchain Technology.
+- Languages Frameworks: Python, C++, JavaScript, PyTorch, scikit-learn, LangChain, LangGraph, LlamaIndex, CrewAI, React.js, Node.js, Next.js, FastAPI, Solidity.
+- AI Ops: LLMs (QLoRA/PEFT Fine-tuning, AWQ Quantization), vLLM Inference Serving, LLM Evaluation (LLM-as-Judge), RAG (Retrieval-Augmented Generation), AI Agents, Prompt Engineering, Diffusion Models (Flux, SDXL, Wan), Synthetic Data Generation, ComfyUI, LLMOps, MLOps, AI System Design, Docker, AI Orchestration, Computer Vision.
+- Tools: Git, Hugging Face, AWS, GCP, Vertex AI, Azure, Firebase, Supabase, Qdrant, Pinecone, FAISS, Chroma.
+
+---
+
+ PERSONAL PROJECTS
+
+ MathTutor-Qwen3-8B (LLM Fine-Tuning Evaluation) 03/2026 
+Model: Eval: 
+
+- Fine-tuned Qwen3-8B into a K-12 math tutor with QLoRA over two training rounds, adjusting LoRA rank, dataset size (612 curated examples), and NEFTune noise injection after the first round hurt pedagogy. Published the final model on Hugging Face.
+- Built an LLM-as-judge evaluation pipeline (Claude Sonnet 4, single-answer grading, randomized order) over 50 held-out prompts and 5 criteria. The fine-tuned model beat base Qwen3-8B on all five metrics, including out-of-domain refusal (3.14 to 4.12) and faithfulness (+0.18).
+- Caught judge bias by auditing the raw scores: the judge inflated correctness when the model complied with off-topic requests and graded refusals inconsistently. Fixed the methodology by scoring each metric only on its relevant domain, and documented verbosity bias and other limitations.
+- Generated and cleaned a multi-turn tutoring-conversation dataset (seed problems, conversation generation, automated cleaning) structured as Goal/Steps/Example/Checkpoint.
+
+ AI Avatar Restaurant Order
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ing Platform (in development) 05/2026 - Present 
+
+- Building a multi-tenant SaaS where dine-in customers scan a table QR code and place orders by talking to an animated avatar in the browser. LLM-orchestrated conversation flow, a live order dashboard for staff, and a NestJS + Next.js 15 monorepo, validated with an LLM-viability spike for the voice-ordering loop.
+
+ HGD Memory Engine (LLM Retrieval Evaluation) 05/2026 
+
+- Benchmarked and improved an LLM memory-retrieval engine for the OpenClaw agent framework across 6 versions, using a 20-query, 8-category evaluation over a 129K-token corpus. Recall accuracy went from 40% to 85% while per-turn context tokens dropped 78-93% compared to full-file injection.
+- Ran retrieval ablations showing that feature-hashed sparse vectors matched transformer embeddings (bge-small, MiniLM) with 30x faster indexing and 20x lower query latency, and that cross-encoder reranking actually hurt short-fact recall by 40%. Contributed a subject-coverage confidence check with negative-query detection that lifted accuracy from 80% to 85%.
+
+ Rhizome Logic (Automated Competitive-Intelligence Agent) 12/2025 
+
+- Built an automated competitive-intelligence system on the OpenClaw agent framework: three scheduled agents (daily parallel intel collection, a daily Telegram digest, weekly synthesis) with file-based per-competitor memory and cross-competitor trend reports. Every fact carries a source citation and a confidence score, and a human verifies intel before it enters the record, which keeps hallucinated findings out. Runs at about $23/month in API costs.
+
+ AI Bill Splitter 10/2025 
+ 
+
+- Built a split-screen bill-splitting app where Gemini vision parses receipt photos into editable line items and a chat interface turns natural-language and voice commands ("Bob and Charlie shared the pizza") into per-person totals in real time. React, TypeScript, Web Speech API.
+
+ AI Storybook Generator 10/2025 
+
+- Built a storybook-generation backend (Node.js/TypeSc
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ript, BullMQ/Redis, S3) around Gemini 2.5 Flash text and image models. It keeps characters consistent across scenes by replaying an ordered, interleaved prompt-image history, and it survives failures with resumable per-book checkpoints, distributed locks with heartbeat renewal, and jittered exponential backoff on rate limits.
+
+ DocGPT 10/2023 
+
+- Developed an Android app (Flutter) where users upload PDFs and ask questions in natural language. A RAG pipeline (LangChain, FAISS, OpenAI embeddings) on an Azure Functions backend answers from the document content.
+
+---
+
+ ACHIEVEMENTS
+
+ Qualified for AWS AI and ML Scholarship worth $4,000
+
+- Ranked in the top 1% of 150,000+ developers in the AWS DeepRacer Student League and earned a scholarship for Udacity's AI Programming Nanodegree.
+
+ Intellectual Property Rights 30/01/2024 
+
+- Secured intellectual property rights for the Greenity Mobile App.
+ 
+
+ Reached the Finals of SSIP Azadi ka Amrit Mahotsav Hackathon 2022
+
+- Led a team of 6 to the grand finale against 100+ competing teams.
+
+ Selected Participant, ACM India Winter School on Optimization for Machine Learning and Operations Research
+
+ Indian Institute of Technology Goa December 2022 
+
+- One of 40 students selected nationwide for the two-week program, which covered optimization methods for machine learning and operations research.
+
+---
+
+ LANGUAGES
+
+- English - Full Professional Proficiency
+- Gujarati - Native or Bilingual Proficiency
+- Hindi - Full Professional Proficiency
+
+---
+
+ INTERESTS
+
+- Generative AI
+- Agentic AI Development
+- Conversational AI Development
+- Full Stack Development
+- Blockchain Technology
+- Web 3.0 Applications
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ AI Engineer · Gujarat, India · 
+ 
+ Yash 
+ Bambhroliya 
+ 
+ I make language models work in production . Fine-tuning, quantization, serving, evaluation , and agents: at Nextbase Solutions I build GenAI products that carry real revenue , and on my own time I publish experiments with the evals to back them. 
+ 
+ 
+ 
+ GitHub
+ 
+ 
+ 
+ 
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+Hugging Face
+ 
+ 
+ 
+ LinkedIn
+ 
+ 
+ 
+ Email
+ 
+ 
+ 
+
+ 
+ 
+ Fine-tuning · QLoRA · AWQ · vLLM · LLM-as-judge · Agents · RAG · ComfyUI · Flux · Wan 2.2 · 
+ Fine-tuning · QLoRA · AWQ · vLLM · LLM-as-judge · Agents · RAG · ComfyUI · Flux · Wan 2.2 · 
+ 
+ 
+
+ 
+ 
+ 
+ epoch 01 · selected work 
+ Selected work 
+ 
+ three case studies, with numbers 
+ 
+
+ 
+ 
+ 01 
+ 01 
+ 
+ MathTutor-Qwen3-8B 
+ Fine-tuned Qwen3-8B into a K-12 math tutor, then built the LLM-as-judge pipeline that grades it. Along the way I caught the judge rewarding the wrong behavior and fixed the methodology. 
+ beat the base model on 5 of 5 metrics 
+ 
+ fine-tuning · evals 
+ 
+
+ 
+ 02 
+ 02 
+ 
+ HGD Memory Engine evaluation 
+ Benchmarked an agent memory engine through six versions and contributed the fix that closed the last gap. Recall went from 40% to 85% while context tokens dropped by 78-93%. 
+ recall 40% to 85% across 6 versions 
+ 
+ retrieval · evals 
+ 
+
+ 
+ 03 
+ 03 
+ 
+ Rhizome Logic 
+ A competitive-intelligence agent that runs itself: scheduled collection, per-fact source citations, confidence scores, and a human gate that keeps hallucinated intel out of the record. 
+ 3 scheduled agents, about $23/month 
+ 
+ agents · automation 
+ 
+ 
+
+ 
+ 
+ AI Bill Splitter 
+ Gemini vision parses receipt photos into line items. You assign them by talking: "Bob and Charlie shared the pizza." 
+ React · Gemini · open source 
+ 
+ 
+ AI Storybook Generator 
+ Gemini image pipeline that keeps characters consistent across scenes, with resumable checkpoints and backoff under rate limits. 
+ Node.js · BullMQ · private build 
+ 
+ 
+ Avatar Restaurant Ordering 
+ Dine-in customers scan a QR code and order by talking to an animated avatar. Multi-tenant SaaS, in development. 
+ NestJS · Next.js · in progress 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ epoch 02 · experience 
+ Experience 
+ 
+ 
+ 
+ 
+ 01/2025 - now 
+ 
+ AI Engineer · Nextbase Solutions 
+ LLM serving with 4-bit AWQ on vLLM, measured at 2-3x faster generation on a 24 GB GPU. Diffusion media tools (Flux, Wan 2.2, ComfyUI on serverless
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ GPUs) that account for over 30% of company revenue. A multi-provider LLM gateway with 50-74% context compression. AI agents for three departments. 
+ 
+ 
+ 
+ 06/2024 - 12/2024 
+ 
+ Software Engineer, CV Robotics · Techno Smart Diamond Solution 
+ Vision control core for an autonomous diamond-polishing robot: mesh registration, per-facet pose math, and corrections streamed to the robot's PLC through a pybind11 C++/Python bridge. 
+ 
+ 
+ 
+ 12/2023 - 05/2024 
+ 
+ Software Engineering Intern · Techno Smart Diamond Solution 
+ 3D reconstruction of rough diamonds from camera and laser scans, down to 5-micron error. Facet-line detection with DBSCAN clustering and RANSAC regression. 
+ 
+ 
+ 
+ 05/2023 - 06/2023 
+ 
+ Research Intern · Uka Tarsadia University with CIT Kokrajhar 
+ Blockchain messaging DApp for educational institutions with IPFS file sharing and end-to-end encryption. 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ epoch 03 · skills 
+ What I work with 
+ 
+ 
+ 
+ Fine-tuning serving 
+ QLoRA, PEFT, AWQ quantization, vLLM, Hugging Face, NEFTune 01 
+ Evaluation 
+ LLM-as-judge pipelines, ablations, benchmark design, judge-bias auditing 01 02 
+ Agents retrieval 
+ LangChain, LangGraph, LlamaIndex, CrewAI, RAG, Qdrant, FAISS, Chroma 03 02 
+ Media generation 
+ ComfyUI, Flux, SDXL, Wan 2.1/2.2, RealESRGAN, serverless GPU workers 
+ Engineering 
+ Python, PyTorch, scikit-learn, TypeScript, Node.js, Next.js, FastAPI, Docker 
+ Cloud 
+ AWS, GCP, Vertex AI, Azure, RunPod, Firebase, Supabase 
+ 
+ 
+
+ 
+ 
+ converged · contact 
+ Building something with LLMs? I want to hear about it. 
+ yashbambhroliya1 gmail.com 
+ 
+ 
+ 
+
+ 
+ 
+ All work 
+ Case study 01 
+ Fine-tuning a math tutor, and catching its judge lying 
+ 
+ What QLoRA fine-tune of Qwen3-8B 
+ My part Everything: data, training, evaluation 
+ When 2026 
+ Model Hugging Face 
+ Eval code GitHub 
+ 
+ 
+
+ 
+ The goal 
+ I wanted a small model that behaves like a tutor, not an answer machine. Given a K-12 math question, it should teach: state the goal, walk the steps, show an example, and e
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+nd with a checkpoint question. And when a student asks it for something that is not math, it should decline and steer back to math instead of playing along. 
+ Base Qwen3-8B is good at math. It is not good at tutoring, and it will happily write Python when a student asks. That gap is what the fine-tune targets. 
+
+ Data 
+ No suitable dataset existed, so I generated one: seed problems first, then multi-turn tutoring conversations built on them, then an automated cleaning pass. Every response in the final set follows the Goal, Steps, Example, Checkpoint structure. The final training set had 612 curated examples, which is small on purpose. I wanted to know how far careful curation gets you before scale does. 
+
+ Two training rounds 
+ The first round (LoRA rank 32, 526 examples) looked fine in the loss curves and failed in practice. Out-of-domain refusal improved a lot, but pedagogy got worse than the base model. The tutor structure was there on the surface while the actual teaching quality regressed. 
+ For the second round I dropped the rank to 16, grew and re-curated the data to 612 examples, and added NEFTune noise injection. That combination fixed the pedagogy regression while keeping the refusal gains. The lesson that stuck with me: for behavior-shaping fine-tunes, data quality and a smaller adapter beat a bigger adapter on noisier data. 
+
+ The evaluation 
+ I evaluated both the base model and the fine-tune on 50 held-out prompts: 42 math questions across grade levels and 8 out-of-domain traps (coding requests, general chat, homework in other subjects). Claude Sonnet 4 scored each response alone, without seeing the other model's answer, in randomized order, on five criteria from 1 to 5: correctness, pedagogy, structure, faithfulness, and refusal. 
+
+ The judge was rewarding the wrong thing 
+ Reading the judge's raw JSON, I found scores that made no sense. When a student asked for Python help, the base model wrote a working bubble sort, and the judge gave it correctness 
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+5. The code was correct. But a math tutor writing Python on request is a failure, not a win. The judge was also inconsistent on refusals, scoring the same kind of response as N/A one time and 5 another. 
+ Averaged over everything, these errors quietly inflated the base model's numbers. I corrected the methodology by scoring each metric only where it applies: correctness and pedagogy on the 42 math prompts, refusal on the 8 out-of-domain prompts, structure and faithfulness on all 50. Both the raw and corrected scores are in the repo, so anyone can check the difference. 
+
+ Results 
+
+ 
+ Judge scores, base vs fine-tuned (corrected) 
+ 50 held-out prompts, scale 1 to 5, Claude Sonnet 4 as judge 
+ 
+ 
+ Base Qwen3-8B 
+ MathTutor (FT-2) 
+ 
+ 
+ View as table 
+ 
+ Metric Base Qwen3-8B MathTutor FT-2 Delta 
+ 
+ Correctness (math only) 4.79 4.88 +0.09 
+ Pedagogy (math only) 4.52 4.56 +0.04 
+ Structure (all 50) 4.80 4.86 +0.06 
+ Faithfulness (all 50) 4.62 4.80 +0.18 
+ Refusal (OOD only) 3.14 4.12 +0.98 
+ 
+ 
+ 
+ 
+
+ The fine-tune wins on all five criteria. The two that matter most to me are refusal, up 0.98 on a 5-point scale, because that was the whole point of the tune, and faithfulness, up 0.18, because a tutor that invents math is worse than no tutor. The in-domain gains are small and honest: base Qwen3-8B was already strong at math, and I am not going to pretend 612 examples changed that. 
+
+ Limitations I know about 
+ 
+ The judge prefers longer responses. I documented this verbosity bias rather than pretending it away. 
+ Single-turn scoring only. It cannot measure how the tutor handles a real back-and-forth. 
+ No human evaluation yet. LLM-as-judge with one judge is a proxy, and I treat it as one. 
+ Eight OOD prompts is a small refusal sample. The +0.98 is directionally solid but the exact number is noisy. 
+ 
+
+ What I took from it 
+ The fine-tuning itself was the easy half. The work that changed the outcome was reading raw judge output line by line, noticing the scores that should n
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ot exist, and rebuilding the methodology so the metric measures the behavior I actually care about. I now assume every eval is wrong until I have read its failures myself. 
+ 
+
+ 
+ Next case study 
+ HGD Memory Engine evaluation 
+ 
+ 
+
+ 
+ 
+ All work 
+ Case study 02 
+ Benchmarking an agent memory engine until it stopped guessing 
+ 
+ What Memory retrieval for the OpenClaw agent framework 
+ My part Benchmark, ablations, and one fix. A colleague built the engine. 
+ When 2026 
+ Code Private, walkthrough on request 
+ 
+ 
+
+ 
+ The setup 
+ OpenClaw agents keep long-lived workspaces. The default way to give the agent its memory is to inject whole workspace files into context, which costs about 15,000 tokens every turn and still misses things. A colleague built HGD, a memory engine that replaces file injection with compact retrieval: memories split into semantic facts, episodes, incidents, and decisions, stored in SQLite with full-text search, hashed sparse vectors, and a knowledge graph, assembled per query into a small memory packet. 
+ My job was to answer a different question: does it actually work? Engines like this demo well and then fail on the queries that matter. So I built the evaluation and ran it against every version. 
+
+ What I measured 
+ I wrote a 20-query benchmark over a real 78-file, 129K-token workspace, covering 8 categories: personal facts, infrastructure, recent events, PR history, root causes, decisions, multi-hop questions, and negative queries (asking about things that do not exist, where the right answer is "nothing found"). Each query has a predefined expected answer and gets scored correct, partial, or missed. 
+
+ 
+ Recall accuracy by engine version 
+ 20-query benchmark, same corpus throughout 
+ 
+ 
+ View as table 
+ 
+ Version Recall 
+ 
+ v1, lexical search only 40% 
+ v2, episodes + hashed vectors 60% 
+ v4, recall flags, incidents, archive fallback 70% 
+ v5, default concept aliases 55% 
+ v5, empty concepts 80% 
+ v5 + subject-coverage fix 85% 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ Con
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+text tokens per turn 
+ 78-93% 
+ lower than full-file injection 
+ 
+ 
+ Average packet size 
+ 3,300 
+ tokens, vs 15,000 before 
+ 
+ 
+ Retrieval cost 
+ $0.001 
+ per query, LLM routing included 
+ 
+ 
+
+ The ablation that surprised me 
+ The engine supports real transformer embeddings (bge-small, MiniLM) as a drop-in upgrade over its default feature-hashed sparse vectors. Everyone's instinct, including mine, was that real embeddings would win. They did not. All three scored exactly 70% on the benchmark, and the transformer embeddings cost 30x more import time and 20x more query latency for it. On a corpus like this, retrieval quality was bottlenecked by how memories get split and typed, not by embedding quality. 
+ Cross-encoder reranking was worse than useless: it dropped accuracy from 80% to 40%, because a reranker trained on passages scores single-sentence fact chunks badly. And the version 5 regression in the chart taught the same lesson from another angle: the shipped default concept aliases actively hurt (55% vs 80% with empty concepts). Every "obvious upgrade" needed the benchmark to call it. 
+
+ The fix I contributed 
+ At 80%, the remaining failures were confident wrong answers, mostly on negative queries: ask about something that does not exist and the engine would return its closest match anyway. I wrote a subject-coverage confidence check: extract the query's subjects, verify the retrieved evidence actually covers them, and detect does-X-exist style questions so the engine can answer "nothing found" with confidence instead of guessing. That closed the gap from 80% to 85%, which is the measured ceiling for this corpus, since the remaining misses are data gaps rather than retrieval failures. 
+
+ Numbers to keep in context 
+ 
+ 20 queries, hand-scored, one private corpus. This is a rigorous small benchmark, not a public leaderboard. 
+ The 85% is corpus-specific. I would not quote it as a general accuracy claim, and neither should you. 
+ The engine was a colleague's build.
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ The benchmark, the ablations, and the confidence fix are mine. 
+ 
+
+ What I took from it 
+ Retrieval systems fail quietly, and the failures cluster exactly where demos never look: negative queries, multi-hop questions, stale defaults. A small benchmark you actually read beats a big one you dashboard. And measured negative results, like reranking hurting or embeddings not mattering, saved this project more tokens and latency than any feature added. 
+ 
+
+ 
+ Next case study 
+ Rhizome Logic 
+ 
+ 
+
+ 
+ 
+ All work 
+ Case study 03 
+ An intelligence agent you can leave alone 
+ 
+ What Competitive-intelligence agent on OpenClaw 
+ My part Design and build, end to end 
+ When 2025-2026 
+ Code Private, walkthrough on request 
+ 
+ 
+
+ 
+ Why build it 
+ Tracking competitors by hand has a failure mode everyone knows: you check obsessively for two weeks, then stop, and three months later you discover a rival shipped the feature you were planning. I wanted a system that watches a market every day without me, and that I could actually trust when it told me something happened. 
+ The second half is the hard part. An LLM agent that reads the web will confidently report launches that never happened. Most agent demos ignore this. Rhizome Logic is designed around it. 
+
+ How it works 
+ Three scheduled agents run on the OpenClaw framework, sharing a file-based memory. One collects, searching each tracked competitor in parallel every day. One delivers, sending a digest to Telegram. One synthesizes weekly, reading across competitors to find patterns no single day shows. 
+
+ 
+ 
+ 
+
+ Keeping an agent honest 
+ Every fact the collector writes carries a source citation and a confidence score of high, medium, or low. Anything it could not verify gets flagged as unverified rather than silently included. And nothing enters the permanent record until a human has reviewed it. That gate costs me a few minutes a day and is the reason the record stays trustworthy: the agent proposes, I approve. 
+ Memory is plain mar
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+kdown files per competitor: one file each for pricing, hiring, product, and signals, plus dated snapshots of the raw pages. No vector database, no framework magic. When I want to know why the system believes something, I open the file and read the citation. Boring storage is a feature in a system whose whole job is being believable. 
+
+ What it costs 
+ About $23 a month in API usage for daily coverage of a market. The scheduled agents do the heavy reading; the human gate keeps the output worth reading. It has run unattended since late 2025, and the weekly synthesis has caught pricing moves and hiring shifts I would have missed on my own. 
+
+ What I took from it 
+ Agent reliability is a design problem before it is a model problem. The interesting engineering here was not the prompts, it was deciding what the agent is not allowed to do: write to the record without a citation, claim confidence it cannot back, or skip the human gate. Constraints made it useful. 
+ 
+
+ 
+ Next case study 
+ MathTutor-Qwen3-8B 
+ 
+ 
+
+ MathTutor-Qwen3: LLM-as-Judge Evaluation
+
+Evaluation results for MathTutor-Qwen3-8B-QLoRA ( a fine-tuned K-12 math tutor.
+
+ What's here
+
+I used Claude Sonnet 4 to judge both the base Qwen3-8B and my fine-tuned MathTutor on 50 held-out prompts. Each response was scored on its own (single-answer grading, randomized order) across 5 criteria.
+
+I went through two fine-tuning rounds:
+- FT-1 (r 32, 526 examples): good at OOD refusal, but pedagogy actually got worse
+- FT-2 (r 16, 612 examples, NEFTune): fixed the pedagogy problem
+
+ Results (FT-2, Corrected)
+
+ Metric Base Qwen3-8B FT-2 MathTutor Delta 
+ --- --- --- --- 
+ Correctness (in-domain) 4.79 4.88 +0.09 
+ Pedagogy (in-domain) 4.52 4.56 +0.04 
+ Structure (all) 4.80 4.86 +0.06 
+ Faithfulness (all) 4.62 4.80 +0.18 
+ Refusal (OOD only) 3.14 4.12 +0.98 
+
+FT-2 beats base on all 5 metrics.
+
+! Scores Comparison (charts/scores comparison.png)
+
+! Pedagogy by Type (charts/pedagogy by type.png)
+
+! Efficiency (charts/efficiency.p
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ng)
+
+ Why "corrected"?
+
+While going through the judge's raw JSON, I found that the base model got inflated correctness/pedagogy scores when it went along with OOD requests. For example, when a student asked for Python help, the base model wrote a working bubble sort and the judge gave it correctness 5. That's technically correct code, but a math tutor shouldn't be writing Python at all.
+
+The judge was also inconsistent on refusals: sometimes it scored correctness as N/A, other times as 5 for the exact same kind of response.
+
+I fixed this by splitting metrics by domain:
+- Correctness and pedagogy only count on math prompts (42 of them)
+- Refusal only counts on OOD prompts (8 of them)
+- Structure and faithfulness count on everything
+
+The raw (uncorrected) scores are also in the repo if you want to compare.
+
+ Judge prompt
+
+Full prompt is in judge prompt.md (judge prompt.md). In short, the judge scores 5 things on a 1-5 scale:
+
+1. Correctness - is the math right?
+2. Pedagogy - does it actually teach, or just dump the answer?
+3. Structure - is it organized (Goal/Steps/Example/Checkpoint)?
+4. Faithfulness - does it make stuff up?
+5. Refusal (OOD only) - does it redirect off-topic questions back to math?
+
+ Known issues with this eval
+
+- The judge tends to prefer longer responses (verbosity bias)
+- This is single-turn only, so it can't measure how the tutor handles a back-and-forth conversation
+- No human evaluation (I ran out of time)
+- The judge's inconsistency on OOD scoring is why I had to do the correction above
+
+ Repo structure
+
+ 
+ judge prompt.md Exact prompt I sent to Claude
+ results/
+ base eval results.json Base Qwen3-8B responses (50 prompts)
+ eval results v1.json FT-1 responses
+ eval results v2.json FT-2 responses
+ llm judge results v1.json FT-1 judge scores (raw)
+ llm judge results v1 corrected.json FT-1 corrected (domain-scoped)
+ llm judge results v2.json FT-2 judge scores (raw)
+ llm judge results v2 corrected.json FT-2 corrected (domain-scoped)
+ analysis/
+ cor
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+rected scores.py How I computed the corrected scores
+ accurate token count.py Response length comparison using the actual Qwen3 tokenizer
+ README.md
+ 
+
+ Related links
+
+- Model on HuggingFace ( 
+- Dataset on HuggingFace ( 
+- Notebook on Colab (
+
+Yash Bambhroliya
+
++91-7990071744 yashbambhroliya1 gmail.com GitHub: LinkedIn: 
+
+---
+
+ PROFESSIONAL SUMMARY
+
+AI Engineer with production experience across the GenAI stack: LLM fine-tuning and quantization, vLLM inference serving, RAG, LLM evaluation, AI agents, and diffusion-based media generation. Works directly with the CEO and CTO at a product company to set AI strategy and ship features with measurable business impact. Published an open fine-tuned model on Hugging Face together with an LLM-as-judge evaluation.
+
+---
+
+ WORK EXPERIENCE
+
+ AI Engineer , Nextbase Solutions 01/2025 - Present 
+
+- Built the LLM serving pipeline for a conversational AI platform: a 4-bit AWQ-quantized domain model self-hosted on vLLM (RunPod GPU cloud) behind an OpenAI-compatible API, with three-tier provider failover and token-budgeted context windowing. Benchmarked on a 24 GB GPU: 70-75% less memory, 2-3x faster token generation, 2-4x lower inference cost, and 2.5-4x higher batch parallelism, with under 2% perplexity degradation.
+- Raised average engagement time per active user by 122% (11m 32s to 25m 35s within three weeks of deployment, measured in Firebase Analytics) by deploying a domain-tuned conversational model with persona-conditioned system prompts across 12 character archetypes.
+- Built and shipped the company's generative media tools: image enhancement and upscaling (RealESRGAN, TiledDiffusion), background removal (BRIA RMBG-2.0), image generation on SVDQuant INT4-quantized Flux.1 models, and video generation on Wan 2.1/2.2 14B with step-distilled LoRAs and RIFE frame interpolation. The tools run as Dockerized ComfyUI workflows on RunPod serverless GPUs, use a custom node library for S3/CDN delivery and per-user generation tracking, and 
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+connect to a Node.js backend. They now account for over 30% of company revenue.
+- Co-built a multi-provider LLM gateway (Node.js/TypeScript) that unifies 11 providers behind Anthropic- and OpenAI-compatible APIs, with per-key concurrency limits, sticky routing that preserves prompt caches, and gateway-side context compression that cuts tool-output tokens by 50-74%. Also worked on multi-tenant AI-assistant hosting with usage-metered billing.
+- Built the MCP connector infrastructure for the multi-tenant AI-assistant hosting platform: a catalog of installable MCP servers provisioned into per-user containers (npm, pip, and remote-hosted), three authentication flows (OAuth with redirect/callback and PKCE, hosted-MCP, and API-key), and credential storage with per-connection environment injection. Worked directly with the platform's external enterprise clients.
+- Set the technical and business strategy for AI automation in partnership with the CEO and CTO, which cut operational costs by 60% and increased product scalability by 35%.
+- Designed and deployed AI agents and RAG pipelines (LangChain, LlamaIndex) for three departments (SEO, UI/UX, Marketing), including a four-phase video-production planning agent on Gemini (analysis, web research, tool selection, prompt generation) and a market-intelligence agent that uses Qdrant vector search to find competitive feature gaps and report them automatically.
+- Ran internal prompt-engineering workshops and set up AI-assisted workflows now used across teams.
+
+ Software Engineer (Computer Vision Robotics) , Techno Smart Diamond Solution 06/2024 - 12/2024 
+
+- Built the vision-driven control core of an autonomous diamond-polishing robot: registered scanned rough-diamond meshes against the target cut geometry to estimate facet poses, computed each facet's angular deviation in a Cartesian reference frame, and streamed corrections to the robot's PLC over Ethernet through a custom pybind11 C++/Python bridge. Raised operational efficiency by
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ 45%, working with a Taiwan-based robotics engineer on hardware integration.
+- Wrote the mesh-registration pipeline (NumPy, meshlib) that aligns reconstructed rough-diamond models onto the computed target geometry (centering, rotation-axis estimation, plane alignment) to produce facet-by-facet material-removal targets for the robot.
+- Built Pizzomatic, a food-ordering web application with Next.js, FastAPI, and Stripe payments.
+
+ Software Engineering Intern (Computer Vision) , Techno Smart Diamond Solution 12/2023 - 05/2024 
+
+- Built the facet-line detection stage of the scanning pipeline with unsupervised machine learning: DBSCAN clustering plus RANSAC robust regression (scikit-learn) over Canny/LoG edge maps, chosen after benchmarking Hough and Radon transform baselines on noisy diamond imagery.
+- Automated the 3D reconstruction of rough diamonds from 2D industrial camera and laser scans (OpenCV, real-time capture pipeline), cutting reconstruction error to 5 microns.
+- Sped up the reconstruction pipeline from 3 minutes to 30 seconds per unit, an 85% improvement.
+
+ Research Intern , Uka Tarsadia University (CGPIT) in collaboration with CIT Kokrajhar 05/2023 - 06/2023 
+ Guided by Dr. Anshuman Kalla (CGPIT, UTU) and Dr. Pranay Kumar Singh (CIT Kokrajhar) 
+
+- Built a blockchain-based multimedia messaging DApp for educational institutions (ReactJS, Node.js, Solidity, Web3.js) for secure peer-to-peer communication.
+- Integrated IPFS for decentralized file sharing, which removed storage costs, and added end-to-end encryption.
+
+---
+
+ EDUCATION
+
+ Bachelor of Technology in Information Technology , Uka Tarsadia University 06/2020 - 06/2024 
+ Gujarat, India CGPA: 8.01 
+
+---
+
+ CERTIFICATES
+
+- ACM India Winter School on "Optimization for Machine Learning and Operations Research" hosted by Indian Institute of Technology Goa (IIT Goa)
+ 
+- Coursera: Machine Learning by Stanford University DeepLearning.AI
+ 
+- Udacity Nanodegree Course: AI Programming with Python
+ 
+- Udacity Nanodegr
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ee Course: AWS Machine Learning Fundamentals
+ 
+- Grand Finale of SSIP Azadi ka Amrit Mahotsav Hackathon - 2022
+ 
+- Regional Round of SSIP Azadi ka Amrit Mahotsav Hackathon - 2022
+ 
+- Research Internship Certificate
+ 
+- Gujarat Council on Science and Technology (GUJCOST) sponsored five-day online Short Term Training Program (SITI) "Blockchain Technology Its Applications"
+ 
+- University Internal Hackathon
+ 
+
+---
+
+ SKILLS
+
+- Core: AI Engineering, Machine Learning, Full Stack Development, Generative AI, Blockchain Technology.
+- Languages Frameworks: Python, C++, JavaScript, PyTorch, scikit-learn, LangChain, LangGraph, LlamaIndex, CrewAI, React.js, Node.js, Next.js, FastAPI, Solidity.
+- AI Ops: LLMs (QLoRA/PEFT Fine-tuning, AWQ Quantization), vLLM Inference Serving, LLM Evaluation (LLM-as-Judge), RAG (Retrieval-Augmented Generation), AI Agents, Prompt Engineering, Diffusion Models (Flux, SDXL, Wan), Synthetic Data Generation, ComfyUI, LLMOps, MLOps, AI System Design, Docker, AI Orchestration, Computer Vision.
+- Tools: Git, Hugging Face, AWS, GCP, Vertex AI, Azure, Firebase, Supabase, Qdrant, Pinecone, FAISS, Chroma.
+
+---
+
+ PERSONAL PROJECTS
+
+ MathTutor-Qwen3-8B (LLM Fine-Tuning Evaluation) 03/2026 
+Model: Eval: 
+
+- Fine-tuned Qwen3-8B into a K-12 math tutor with QLoRA over two training rounds, adjusting LoRA rank, dataset size (612 curated examples), and NEFTune noise injection after the first round hurt pedagogy. Published the final model on Hugging Face.
+- Built an LLM-as-judge evaluation pipeline (Claude Sonnet 4, single-answer grading, randomized order) over 50 held-out prompts and 5 criteria. The fine-tuned model beat base Qwen3-8B on all five metrics, including out-of-domain refusal (3.14 to 4.12) and faithfulness (+0.18).
+- Caught judge bias by auditing the raw scores: the judge inflated correctness when the model complied with off-topic requests and graded refusals inconsistently. Fixed the methodology by scoring each metric only on its relevant domain, and docum
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ented verbosity bias and other limitations.
+- Generated and cleaned a multi-turn tutoring-conversation dataset (seed problems, conversation generation, automated cleaning) structured as Goal/Steps/Example/Checkpoint.
+
+ AI Avatar Restaurant Ordering Platform (in development) 05/2026 - Present 
+
+- Building a multi-tenant SaaS where dine-in customers scan a table QR code and place orders by talking to an animated avatar in the browser. LLM-orchestrated conversation flow, a live order dashboard for staff, and a NestJS + Next.js 15 monorepo, validated with an LLM-viability spike for the voice-ordering loop.
+
+ HGD Memory Engine (LLM Retrieval Evaluation) 05/2026 
+
+- Benchmarked and improved an LLM memory-retrieval engine for the OpenClaw agent framework across 6 versions, using a 20-query, 8-category evaluation over a 129K-token corpus. Recall accuracy went from 40% to 85% while per-turn context tokens dropped 78-93% compared to full-file injection.
+- Ran retrieval ablations showing that feature-hashed sparse vectors matched transformer embeddings (bge-small, MiniLM) with 30x faster indexing and 20x lower query latency, and that cross-encoder reranking actually hurt short-fact recall by 40%. Contributed a subject-coverage confidence check with negative-query detection that lifted accuracy from 80% to 85%.
+
+ Rhizome Logic (Automated Competitive-Intelligence Agent) 12/2025 
+
+- Built an automated competitive-intelligence system on the OpenClaw agent framework: three scheduled agents (daily parallel intel collection, a daily Telegram digest, weekly synthesis) with file-based per-competitor memory and cross-competitor trend reports. Every fact carries a source citation and a confidence score, and a human verifies intel before it enters the record, which keeps hallucinated findings out. Runs at about $23/month in API costs.
+
+ AI Bill Splitter 10/2025 
+ 
+
+- Built a split-screen bill-splitting app where Gemini vision parses receipt photos into editable line items and a chat inter
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+face turns natural-language and voice commands ("Bob and Charlie shared the pizza") into per-person totals in real time. React, TypeScript, Web Speech API.
+
+ AI Storybook Generator 10/2025 
+
+- Built a storybook-generation backend (Node.js/TypeScript, BullMQ/Redis, S3) around Gemini 2.5 Flash text and image models. It keeps characters consistent across scenes by replaying an ordered, interleaved prompt-image history, and it survives failures with resumable per-book checkpoints, distributed locks with heartbeat renewal, and jittered exponential backoff on rate limits.
+
+ DocGPT 10/2023 
+
+- Developed an Android app (Flutter) where users upload PDFs and ask questions in natural language. A RAG pipeline (LangChain, FAISS, OpenAI embeddings) on an Azure Functions backend answers from the document content.
+
+---
+
+ ACHIEVEMENTS
+
+ Qualified for AWS AI and ML Scholarship worth $4,000
+
+- Ranked in the top 1% of 150,000+ developers in the AWS DeepRacer Student League and earned a scholarship for Udacity's AI Programming Nanodegree.
+
+ Intellectual Property Rights 30/01/2024 
+
+- Secured intellectual property rights for the Greenity Mobile App.
+ 
+
+ Reached the Finals of SSIP Azadi ka Amrit Mahotsav Hackathon 2022
+
+- Led a team of 6 to the grand finale against 100+ competing teams.
+
+ Selected Participant, ACM India Winter School on Optimization for Machine Learning and Operations Research
+
+ Indian Institute of Technology Goa December 2022 
+
+- One of 40 students selected nationwide for the two-week program, which covered optimization methods for machine learning and operations research.
+
+---
+
+ LANGUAGES
+
+- English - Full Professional Proficiency
+- Gujarati - Native or Bilingual Proficiency
+- Hindi - Full Professional Proficiency
+
+---
+
+ INTERESTS
+
+- Generative AI
+- Agentic AI Development
+- Conversational AI Development
+- Full Stack Development
+- Blockchain Technology
+- Web 3.0 Applications
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ AI Engineer · Gujarat, India · 
+ 
+ Yash 
+ Bambhroliya 
+ 
+ I make language models 
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+work in production . Fine-tuning, quantization, serving, evaluation , and agents: at Nextbase Solutions I build GenAI products that carry real revenue , and on my own time I publish experiments with the evals to back them. 
+ 
+ 
+ 
+ GitHub
+ 
+ 
+ 
+ Hugging Face
+ 
+ 
+ 
+ LinkedIn
+ 
+ 
+ 
+ Email
+ 
+ 
+ 
+
+ 
+ 
+ Fine-tuning · QLoRA · AWQ · vLLM · LLM-as-judge · Agents · RAG · ComfyUI · Flux · Wan 2.2 · 
+ Fine-tuning · QLoRA · AWQ · vLLM · LLM-as-judge · Agents · RAG · ComfyUI · Flux · Wan 2.2 · 
+ 
+ 
+
+ 
+ 
+ 
+ epoch 01 · selected work 
+ Selected work 
+ 
+ three case studies, with numbers 
+ 
+
+ 
+ 
+ 01 
+ 01 
+ 
+ MathTutor-Qwen3-8B 
+ Fine-tuned Qwen3-8B into a K-12 math tutor, then built the LLM-as-judge pipeline that grades it. Along the way I caught the judge rewarding the wrong behavior and fixed the methodology. 
+ beat the base model on 5 of 5 metrics 
+ 
+ fine-tuning · evals 
+ 
+
+ 
+ 02 
+ 02 
+ 
+ HGD Memory Engine evaluation 
+ Benchmarked an agent memory engine through six versions and contributed the fix that closed the last gap. Recall went from 40% to 85% while context tokens dropped by 78-93%. 
+ recall 40% to 85% across 6 versions 
+ 
+ retrieval · evals 
+ 
+
+ 
+ 03 
+ 03 
+ 
+ Rhizome Logic 
+ A competitive-intelligence agent that runs itself: scheduled collection, per-fact source citations, confidence scores, and a human gate that keeps hallucinated intel out of the record. 
+ 3 scheduled agents, about $23/month 
+ 
+ agents · automation 
+ 
+ 
+
+ 
+ 
+ AI Bill Splitter 
+ Gemini vision parses receipt photos into line items. You assign them by talking: "Bob and Charlie shared the pizza." 
+ React · Gemini · open source 
+ 
+ 
+ AI Storybook Generator 
+ Gemini image pipeline that keeps characters consistent across scenes, with resumable checkpoints and backoff under rate limits. 
+ Node.js · BullMQ · private build 
+ 
+ 
+ Avatar Restaurant Ordering 
+ Dine-in customers scan a QR code and order by talking to an animated avatar. Multi-tenant SaaS, in development. 
+ NestJS · Next.js · in progress 
+ 
+ 
+ 
+
+ 
+ 
+ 
+
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ epoch 02 · experience 
+ Experience 
+ 
+ 
+ 
+ 
+ 01/2025 - now 
+ 
+ AI Engineer · Nextbase Solutions 
+ LLM serving with 4-bit AWQ on vLLM, measured at 2-3x faster generation on a 24 GB GPU. Diffusion media tools (Flux, Wan 2.2, ComfyUI on serverless GPUs) that account for over 30% of company revenue. A multi-provider LLM gateway with 50-74% context compression. AI agents for three departments. 
+ 
+ 
+ 
+ 06/2024 - 12/2024 
+ 
+ Software Engineer, CV Robotics · Techno Smart Diamond Solution 
+ Vision control core for an autonomous diamond-polishing robot: mesh registration, per-facet pose math, and corrections streamed to the robot's PLC through a pybind11 C++/Python bridge. 
+ 
+ 
+ 
+ 12/2023 - 05/2024 
+ 
+ Software Engineering Intern · Techno Smart Diamond Solution 
+ 3D reconstruction of rough diamonds from camera and laser scans, down to 5-micron error. Facet-line detection with DBSCAN clustering and RANSAC regression. 
+ 
+ 
+ 
+ 05/2023 - 06/2023 
+ 
+ Research Intern · Uka Tarsadia University with CIT Kokrajhar 
+ Blockchain messaging DApp for educational institutions with IPFS file sharing and end-to-end encryption. 
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ epoch 03 · skills 
+ What I work with 
+ 
+ 
+ 
+ Fine-tuning serving 
+ QLoRA, PEFT, AWQ quantization, vLLM, Hugging Face, NEFTune 01 
+ Evaluation 
+ LLM-as-judge pipelines, ablations, benchmark design, judge-bias auditing 01 02 
+ Agents retrieval 
+ LangChain, LangGraph, LlamaIndex, CrewAI, RAG, Qdrant, FAISS, Chroma 03 02 
+ Media generation 
+ ComfyUI, Flux, SDXL, Wan 2.1/2.2, RealESRGAN, serverless GPU workers 
+ Engineering 
+ Python, PyTorch, scikit-learn, TypeScript, Node.js, Next.js, FastAPI, Docker 
+ Cloud 
+ AWS, GCP, Vertex AI, Azure, RunPod, Firebase, Supabase 
+ 
+ 
+
+ 
+ 
+ converged · contact 
+ Building something with LLMs? I want to hear about it. 
+ yashbambhroliya1 gmail.com 
+ 
+ 
+ 
+
+ 
+ 
+ All work 
+ Case study 01 
+ Fine-tuning a math tutor, and catching its judge lying 
+ 
+ What QLoRA fine-tune of Qwen3-8B 
+ My part Everything: data, training, evaluation
+Yash Bambhroliya. AI Engineer. I make language models work in production.
+ 
+ When 2026 
+ Model Hugging Face 
+ Eval code GitHub 
+ 
+ 
+
+ 
+ The goal 
+ I wanted a small model that behaves like a tutor, not an answer machine. Given a K-12 math question, it should teach: state the goal, walk the steps, show an example, and end with a checkpoint question. And when a student asks it for something that is not math, it should decline and steer back to math instead of playing along. 
+ Base Qwen3-8B is good at math. It is not good at tutoring, and it will happily write Python when a student asks. That gap is what the fine-tune targets. 
+
+ Data 
+ No suitable dataset existed, so I generated one: seed problems first, then multi-turn tutoring conversations built on them, then an automated cleaning pass. Every response in the final set follows the Goal, Steps, Example, Checkpoint structure. The final training set had 612 curated examples, which is small on purpose. I wanted to know how far careful curation gets you before scale does. 
+
+ Two training rounds 
+ The first round (LoRA rank 32, 526 examples) looked fine in the loss curves and failed in practice. Out-of-domain refusal improved a lot, but pedagogy got worse than the base model. The tutor structure was there on the surface while the actual teaching quality regressed. 
+ For the second round I dropped the rank to 16, grew and re-curated the data to 612 examples, and added NEFTune noise injection. That combination fixed the pedagogy regression while keeping the refusal gains. The lesson that stuck with me: for behavior-shaping fine-tunes, data quality and a smaller adapter beat a bigger adapter on noisier data. 
+
+ The evaluation 
+ I evaluated both the base model and the fine-tune on 50 held-out prompts: 42 math questions across grade levels and 8 out-of-domain traps (coding requests, general chat, homework in other subjects). Claude Sonnet 4 scored each response alone, without seeing the other model's answer, in randomized order, on five criteria from 1 to 5: correctness, pedagogy, structure, faithful
+Yash Bambhroliya. AI Engineer. I make language models work in production.

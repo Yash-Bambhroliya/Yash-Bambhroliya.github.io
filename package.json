@@ -1,0 +1,11 @@
+{
+  "name": "yashb-me",
+  "version": "4.0.0",
+  "private": true,
+  "description": "Personal site of Yash Bambhroliya. Static front end, one API function.",
+  "dependencies": {
+    "@google/genai": "^1.9.0",
+    "@upstash/ratelimit": "^2.0.5",
+    "@upstash/redis": "^1.35.0"
+  }
+}
