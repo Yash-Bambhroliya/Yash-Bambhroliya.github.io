@@ -607,8 +607,18 @@ onmessage = function (e) {
        decided here, before the player sees the choices. */
     if (!M) return;
     var CTX = 60;
-    var off = CTX + 1 + Math.floor(Math.random() * (M.ids.length - CTX - 2));
-    /* land on a guessable target: letters and common punctuation */
+    /* land in real prose: re-roll offsets whose recent context is mostly
+       whitespace (the corpus has list-heavy stretches) */
+    var off = 0, tries = 0;
+    do {
+      off = CTX + 1 + Math.floor(Math.random() * (M.ids.length - CTX - 2));
+      var ws = 0;
+      for (var k = off - 24; k < off; k++) {
+        var ck = M.itos[M.ids[k]];
+        if (ck === " " || ck === "\n") ws++;
+      }
+    } while (ws > 8 && ++tries < 30);
+    /* and on a guessable target: letters and common punctuation */
     var guard = 0;
     while (!/[a-z .,]/.test(M.itos[M.ids[off]]) && guard++ < 500) {
       off++;

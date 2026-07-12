@@ -98,19 +98,30 @@
 
     function playRound() {
       S.answered = false;
+      S.failed = false;
       el.reveal.hidden = true;
       el.count.textContent = "round " + (S.n + 1) + "/" + ROUNDS;
-      el.ctx.textContent = "…";
+      el.ctx.textContent = "reading my corpus";
       el.choices.innerHTML = "";
+      attempt(3);
+    }
+
+    function attempt(left) {
       TRAINER.quiz().then(function (q) {
         if (!S.open) return;
-        if (!q) { el.ctx.textContent = "the sampler timed out, one more try"; TRAINER.quiz().then(gotRound); return; }
-        gotRound(q);
+        if (q) { gotRound(q); return; }
+        if (left > 1) { setTimeout(function () { attempt(left - 1); }, 900); return; }
+        S.failed = true;
+        el.ctx.textContent = "could not reach the model. give it a second and try again.";
+        el.verdict.textContent = "";
+        el.top.textContent = "";
+        el.next.textContent = "try again";
+        el.reveal.hidden = false;
       });
     }
 
     function gotRound(q) {
-      if (!S.open || !q) { if (S.open) endGame(); return; }
+      if (!S.open) return;
       S.current = q;
       el.ctx.textContent = q.context.replace(/\s+/g, " ");
       var choices = buildChoices(q);
@@ -181,6 +192,7 @@
     }
 
     function nextRound() {
+      if (S.failed) { playRound(); return; }
       S.n++;
       if (S.n >= ROUNDS) { endGame(); return; }
       playRound();

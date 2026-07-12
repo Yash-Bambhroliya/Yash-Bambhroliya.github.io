@@ -66,7 +66,11 @@ const server = createServer(async (req, res) => {
       data = await readFile(join(root, file + ".html"));
       file += ".html";
     }
-    res.writeHead(200, { "Content-Type": TYPES[extname(file)] || "application/octet-stream" });
+    res.writeHead(200, {
+      "Content-Type": TYPES[extname(file)] || "application/octet-stream",
+      /* dev only: stale workers and scripts poison testing */
+      "Cache-Control": "no-store"
+    });
     res.end(data);
   } catch (e) {
     res.writeHead(404, { "Content-Type": "text/plain" });
