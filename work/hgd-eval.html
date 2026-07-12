@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HGD Memory Engine evaluation · case study · Yash Bambhroliya</title>
+  <meta name="description" content="Benchmarking an LLM agent memory engine through six versions: 40% to 85% recall, 78-93% fewer context tokens, and the ablations that decided the design.">
+  <link rel="canonical" href="https://yashb.me/work/hgd-eval.html">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/site.css">
+  <script>(function(){var d=document.documentElement;d.classList.add("js");try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")d.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="HGD Memory Engine: evaluation and improvement">
+  <meta property="og:description" content="A 20-query benchmark over a 129K-token corpus, run across six engine versions. Recall 40% to 85%.">
+  <meta property="og:url" content="https://yashb.me/work/hgd-eval.html">
+</head>
+<body data-temp="0.7" data-page="case">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="preloader" aria-hidden="true">
+    <div class="preloader-log">
+      <div class="row"><span class="prompt">$</span> yash --load work/hgd-eval</div>
+      <div class="row"><span class="ok">✓</span> checkpoint restored</div>
+    </div>
+  </div>
+
+  
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="/">Yash Bambhroliya</a>
+      <nav class="nav-links" aria-label="Site">
+        <a href="/#work" aria-current="page">Work</a>
+        <a href="/#experience">Experience</a>
+        <a href="/#contact">Contact</a>
+        <button class="temp-ctl" type="button" data-temp-ctl aria-label="Cycle temperature: changes how animated the site is">
+          temp <span class="t-val" data-temp-val>0.7</span>
+        </button>
+        <button class="theme-toggle" type="button" aria-label="Switch color theme">
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17a5 5 0 110-10 5 5 0 010 10zm0-2a3 3 0 100-6 3 3 0 000 6zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM1 11h3v2H1v-2zm19 0h3v2h-3v-2zM4.2 5.6l1.4-1.4 2.1 2.1-1.4 1.4-2.1-2.1zm12.1 12.1l1.4-1.4 2.1 2.1-1.4 1.4-2.1-2.1zm2.1-13.5l1.4 1.4-2.1 2.1-1.4-1.4 2.1-2.1zM5.6 19.8l-1.4-1.4 2.1-2.1 1.4 1.4-2.1 2.1z"/></svg>
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.5A8.5 8.5 0 019.5 3a8.5 8.5 0 1011.5 11.5z"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap cs-header">
+      <a class="back" href="/#work">← All work</a>
+      <p class="kicker">Case study 02</p>
+      <h1>Benchmarking an agent memory engine until it stopped guessing</h1>
+      <dl class="cs-meta">
+        <div><dt>What</dt><dd>Memory retrieval for the OpenClaw agent framework</dd></div>
+        <div><dt>My part</dt><dd>Benchmark, ablations, and one fix. A colleague built the engine.</dd></div>
+        <div><dt>When</dt><dd>2026</dd></div>
+        <div><dt>Code</dt><dd>Private, walkthrough on request</dd></div>
+      </dl>
+    </div>
+
+    <article class="wrap cs-body prose">
+      <h2>The setup</h2>
+      <p>OpenClaw agents keep long-lived workspaces. The default way to give the agent its memory is to inject whole workspace files into context, which costs about 15,000 tokens every turn and still misses things. A colleague built HGD, a memory engine that replaces file injection with compact retrieval: memories split into semantic facts, episodes, incidents, and decisions, stored in SQLite with full-text search, hashed sparse vectors, and a knowledge graph, assembled per query into a small memory packet.</p>
+      <p>My job was to answer a different question: does it actually work? Engines like this demo well and then fail on the queries that matter. So I built the evaluation and ran it against every version.</p>
+
+      <h2>What I measured</h2>
+      <p>I wrote a 20-query benchmark over a real 78-file, 129K-token workspace, covering 8 categories: personal facts, infrastructure, recent events, PR history, root causes, decisions, multi-hop questions, and negative queries (asking about things that do not exist, where the right answer is "nothing found"). Each query has a predefined expected answer and gets scored correct, partial, or missed.</p>
+
+      <figure class="viz" role="group" aria-label="Line chart of benchmark recall accuracy across six engine versions">
+        <p class="viz-title">Recall accuracy by engine version</p>
+        <p class="viz-sub">20-query benchmark, same corpus throughout</p>
+        <svg viewBox="0 0 640 280" aria-hidden="true">
+          <g>
+            <line class="grid-line" x1="40" y1="14"  x2="620" y2="14"/>
+            <line class="grid-line" x1="40" y1="69"  x2="620" y2="69"/>
+            <line class="grid-line" x1="40" y1="124" x2="620" y2="124"/>
+            <line class="grid-line" x1="40" y1="179" x2="620" y2="179"/>
+            <line class="axis-line" x1="40" y1="234" x2="620" y2="234"/>
+          </g>
+          <g>
+            <text class="tick-label" x="32" y="18"  text-anchor="end">100%</text>
+            <text class="tick-label" x="32" y="73"  text-anchor="end">75%</text>
+            <text class="tick-label" x="32" y="128" text-anchor="end">50%</text>
+            <text class="tick-label" x="32" y="183" text-anchor="end">25%</text>
+            <text class="tick-label" x="32" y="238" text-anchor="end">0%</text>
+          </g>
+          <path class="line-path" d="M60 146 L168 102 L276 80 L384 113 L492 58 L600 47"/>
+          <g>
+            <circle class="dot" cx="60"  cy="146" r="5" data-tip="v1, lexical search only: 40%"/>
+            <circle class="dot" cx="168" cy="102" r="5" data-tip="v2, episodes and hashed vectors: 60%"/>
+            <circle class="dot" cx="276" cy="80"  r="5" data-tip="v4, recall flags, incidents, archive fallback: 70%"/>
+            <circle class="dot" cx="384" cy="113" r="5" data-tip="v5 with default concept aliases: 55%. The defaults hurt."/>
+            <circle class="dot" cx="492" cy="58"  r="5" data-tip="v5 with empty concepts: 80%"/>
+            <circle class="dot" cx="600" cy="47"  r="5" data-tip="v5 plus my subject-coverage fix: 85%"/>
+          </g>
+          <g>
+            <text class="direct-label" x="60"  y="168" text-anchor="middle">40%</text>
+            <text class="direct-label" x="384" y="135" text-anchor="middle">55%</text>
+            <text class="direct-label" x="600" y="35"  text-anchor="middle">85%</text>
+          </g>
+          <g>
+            <text class="cat-label" x="60"  y="256" text-anchor="middle">v1</text>
+            <text class="cat-label" x="168" y="256" text-anchor="middle">v2</text>
+            <text class="cat-label" x="276" y="256" text-anchor="middle">v4</text>
+            <text class="cat-label" x="384" y="256" text-anchor="middle">v5</text>
+            <text class="cat-label" x="384" y="270" text-anchor="middle" opacity="0.75">defaults</text>
+            <text class="cat-label" x="492" y="256" text-anchor="middle">v5</text>
+            <text class="cat-label" x="492" y="270" text-anchor="middle" opacity="0.75">tuned</text>
+            <text class="cat-label" x="600" y="256" text-anchor="middle">v5</text>
+            <text class="cat-label" x="600" y="270" text-anchor="middle" opacity="0.75">+ fix</text>
+          </g>
+        </svg>
+        <details>
+          <summary>View as table</summary>
+          <table>
+            <thead><tr><th>Version</th><th>Recall</th></tr></thead>
+            <tbody>
+              <tr><td>v1, lexical search only</td><td>40%</td></tr>
+              <tr><td>v2, episodes + hashed vectors</td><td>60%</td></tr>
+              <tr><td>v4, recall flags, incidents, archive fallback</td><td>70%</td></tr>
+              <tr><td>v5, default concept aliases</td><td>55%</td></tr>
+              <tr><td>v5, empty concepts</td><td>80%</td></tr>
+              <tr><td>v5 + subject-coverage fix</td><td>85%</td></tr>
+            </tbody>
+          </table>
+        </details>
+      </figure>
+
+      <div class="stat-row">
+        <div class="stat">
+          <p class="label">Context tokens per turn</p>
+          <p class="value">78-93%</p>
+          <p class="note">lower than full-file injection</p>
+        </div>
+        <div class="stat">
+          <p class="label">Average packet size</p>
+          <p class="value">~3,300</p>
+          <p class="note">tokens, vs ~15,000 before</p>
+        </div>
+        <div class="stat">
+          <p class="label">Retrieval cost</p>
+          <p class="value">$0.001</p>
+          <p class="note">per query, LLM routing included</p>
+        </div>
+      </div>
+
+      <h2>The ablation that surprised me</h2>
+      <p>The engine supports real transformer embeddings (bge-small, MiniLM) as a drop-in upgrade over its default feature-hashed sparse vectors. Everyone's instinct, including mine, was that real embeddings would win. They did not. All three scored exactly 70% on the benchmark, and the transformer embeddings cost 30x more import time and 20x more query latency for it. On a corpus like this, retrieval quality was bottlenecked by how memories get split and typed, not by embedding quality.</p>
+      <p>Cross-encoder reranking was worse than useless: it dropped accuracy from 80% to 40%, because a reranker trained on passages scores single-sentence fact chunks badly. And the version 5 regression in the chart taught the same lesson from another angle: the shipped default concept aliases actively hurt (55% vs 80% with empty concepts). Every "obvious upgrade" needed the benchmark to call it.</p>
+
+      <h2>The fix I contributed</h2>
+      <p>At 80%, the remaining failures were confident wrong answers, mostly on negative queries: ask about something that does not exist and the engine would return its closest match anyway. I wrote a subject-coverage confidence check: extract the query's subjects, verify the retrieved evidence actually covers them, and detect does-X-exist style questions so the engine can answer "nothing found" with confidence instead of guessing. That closed the gap from 80% to 85%, which is the measured ceiling for this corpus, since the remaining misses are data gaps rather than retrieval failures.</p>
+
+      <h2>Numbers to keep in context</h2>
+      <ul>
+        <li>20 queries, hand-scored, one private corpus. This is a rigorous small benchmark, not a public leaderboard.</li>
+        <li>The 85% is corpus-specific. I would not quote it as a general accuracy claim, and neither should you.</li>
+        <li>The engine was a colleague's build. The benchmark, the ablations, and the confidence fix are mine.</li>
+      </ul>
+
+      <h2>What I took from it</h2>
+      <p>Retrieval systems fail quietly, and the failures cluster exactly where demos never look: negative queries, multi-hop questions, stale defaults. A small benchmark you actually read beats a big one you dashboard. And measured negative results, like reranking hurting or embeddings not mattering, saved this project more tokens and latency than any feature added.</p>
+    </article>
+
+    <div class="wrap cs-next">
+      <span class="label">Next case study</span>
+      <a href="/work/rhizome.html">Rhizome Logic →</a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap foot-inner">
+      <span>© 2026 Yash Bambhroliya</span>
+      <span class="term-hint">press <kbd>`</kbd> for terminal</span>
+      <span><a href="/">yashb.me</a></span>
+    </div>
+  </footer>
+
+  <div class="loss-widget" aria-hidden="true">
+    <svg viewBox="0 0 96 28">
+      <path class="curve" data-loss-curve d="M2 3 C 14 4, 18 12, 28 15 S 46 21, 58 23 S 84 25.5, 94 26"/>
+    </svg>
+    <span>epoch <span data-loss-epoch>1</span>/3 · loss <span class="loss-val" data-loss-live>2.310</span></span>
+  </div>
+
+  <div class="term" data-term aria-label="Terminal" role="dialog">
+    <div class="term-out" data-term-out></div>
+    <div class="term-in">
+      <span class="ps1">yash@yashb.me:~$</span>
+      <input type="text" data-term-in autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input">
+    </div>
+  </div>
+
+  <script src="/vendor/gsap.min.js" defer></script>
+  <script src="/vendor/ScrollTrigger.min.js" defer></script>
+  <script src="/vendor/SplitText.min.js" defer></script>
+  <script src="/vendor/ScrambleTextPlugin.min.js" defer></script>
+  <script src="/vendor/lenis.min.js" defer></script>
+  <script src="/js/site.js" defer></script>
+</body>
+</html>

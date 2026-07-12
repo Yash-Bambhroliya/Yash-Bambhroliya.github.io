@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rhizome Logic · case study · Yash Bambhroliya</title>
+  <meta name="description" content="A competitive-intelligence agent on the OpenClaw framework: scheduled collection, per-fact citations, confidence scores, and a human verification gate. About $23 a month to run.">
+  <link rel="canonical" href="https://yashb.me/work/rhizome.html">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/site.css">
+  <script>(function(){var d=document.documentElement;d.classList.add("js");try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")d.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Rhizome Logic: an intelligence agent that runs itself">
+  <meta property="og:description" content="Three scheduled agents, file-based memory, and a design that keeps hallucinated intel out of the record.">
+  <meta property="og:url" content="https://yashb.me/work/rhizome.html">
+</head>
+<body data-temp="0.7" data-page="case">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="preloader" aria-hidden="true">
+    <div class="preloader-log">
+      <div class="row"><span class="prompt">$</span> yash --load work/rhizome</div>
+      <div class="row"><span class="ok">✓</span> checkpoint restored</div>
+    </div>
+  </div>
+
+  
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="/">Yash Bambhroliya</a>
+      <nav class="nav-links" aria-label="Site">
+        <a href="/#work" aria-current="page">Work</a>
+        <a href="/#experience">Experience</a>
+        <a href="/#contact">Contact</a>
+        <button class="temp-ctl" type="button" data-temp-ctl aria-label="Cycle temperature: changes how animated the site is">
+          temp <span class="t-val" data-temp-val>0.7</span>
+        </button>
+        <button class="theme-toggle" type="button" aria-label="Switch color theme">
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17a5 5 0 110-10 5 5 0 010 10zm0-2a3 3 0 100-6 3 3 0 000 6zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM1 11h3v2H1v-2zm19 0h3v2h-3v-2zM4.2 5.6l1.4-1.4 2.1 2.1-1.4 1.4-2.1-2.1zm12.1 12.1l1.4-1.4 2.1 2.1-1.4 1.4-2.1-2.1zm2.1-13.5l1.4 1.4-2.1 2.1-1.4-1.4 2.1-2.1zM5.6 19.8l-1.4-1.4 2.1-2.1 1.4 1.4-2.1 2.1z"/></svg>
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.5A8.5 8.5 0 019.5 3a8.5 8.5 0 1011.5 11.5z"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap cs-header">
+      <a class="back" href="/#work">← All work</a>
+      <p class="kicker">Case study 03</p>
+      <h1>An intelligence agent you can leave alone</h1>
+      <dl class="cs-meta">
+        <div><dt>What</dt><dd>Competitive-intelligence agent on OpenClaw</dd></div>
+        <div><dt>My part</dt><dd>Design and build, end to end</dd></div>
+        <div><dt>When</dt><dd>2025-2026</dd></div>
+        <div><dt>Code</dt><dd>Private, walkthrough on request</dd></div>
+      </dl>
+    </div>
+
+    <article class="wrap cs-body prose">
+      <h2>Why build it</h2>
+      <p>Tracking competitors by hand has a failure mode everyone knows: you check obsessively for two weeks, then stop, and three months later you discover a rival shipped the feature you were planning. I wanted a system that watches a market every day without me, and that I could actually trust when it told me something happened.</p>
+      <p>The second half is the hard part. An LLM agent that reads the web will confidently report launches that never happened. Most agent demos ignore this. Rhizome Logic is designed around it.</p>
+
+      <h2>How it works</h2>
+      <p>Three scheduled agents run on the OpenClaw framework, sharing a file-based memory. One collects, searching each tracked competitor in parallel every day. One delivers, sending a digest to Telegram. One synthesizes weekly, reading across competitors to find patterns no single day shows.</p>
+
+      <figure class="diagram" role="group" aria-label="Architecture diagram: collection agent feeds per-competitor memory, a verification gate feeds the verified record, which feeds the daily digest and weekly synthesis">
+        <svg viewBox="0 0 640 340">
+          <defs>
+            <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 Z" fill="currentColor" opacity="0.55"/>
+            </marker>
+          </defs>
+
+          <text class="dlabel" x="32" y="24">daily</text>
+          <rect class="box" x="32" y="34" width="170" height="66" rx="8"/>
+          <text x="48" y="60">Collect agent</text>
+          <text class="small" x="48" y="78">searches every competitor</text>
+          <text class="small" x="48" y="92">in parallel, cites sources</text>
+
+          <line class="flow" x1="202" y1="67" x2="240" y2="67"/>
+
+          <rect class="box" x="244" y="34" width="170" height="66" rx="8"/>
+          <text x="260" y="60">Competitor memory</text>
+          <text class="small" x="260" y="78">pricing, hiring, product,</text>
+          <text class="small" x="260" y="92">signals + raw snapshots</text>
+
+          <line class="flow" x1="414" y1="67" x2="452" y2="67"/>
+
+          <text class="dlabel" x="456" y="24">the trust gate</text>
+          <rect class="box box-accent" x="456" y="34" width="152" height="66" rx="8"/>
+          <text x="470" y="60">Human verification</text>
+          <text class="small" x="470" y="78">confidence scores,</text>
+          <text class="small" x="470" y="92">unverified flagged</text>
+
+          <line class="flow" x1="532" y1="100" x2="532" y2="138"/>
+
+          <rect class="box" x="420" y="142" width="188" height="60" rx="8"/>
+          <text x="436" y="166">Verified record</text>
+          <text class="small" x="436" y="184">plus cross-competitor trends</text>
+
+          <path class="flow" d="M514 202 V232 H286 V258"/>
+          <line class="flow" x1="514" y1="202" x2="514" y2="258"/>
+
+          <text class="dlabel" x="186" y="252">daily</text>
+          <rect class="box" x="186" y="262" width="200" height="60" rx="8"/>
+          <text x="202" y="286">Telegram digest</text>
+          <text class="small" x="202" y="304">what changed, with links</text>
+
+          <text class="dlabel" x="420" y="252">weekly</text>
+          <rect class="box" x="420" y="262" width="188" height="60" rx="8"/>
+          <text x="436" y="286">Trend synthesis</text>
+          <text class="small" x="436" y="304">patterns across the market</text>
+        </svg>
+      </figure>
+
+      <h2>Keeping an agent honest</h2>
+      <p>Every fact the collector writes carries a source citation and a confidence score of high, medium, or low. Anything it could not verify gets flagged as unverified rather than silently included. And nothing enters the permanent record until a human has reviewed it. That gate costs me a few minutes a day and is the reason the record stays trustworthy: the agent proposes, I approve.</p>
+      <p>Memory is plain markdown files per competitor: one file each for pricing, hiring, product, and signals, plus dated snapshots of the raw pages. No vector database, no framework magic. When I want to know why the system believes something, I open the file and read the citation. Boring storage is a feature in a system whose whole job is being believable.</p>
+
+      <h2>What it costs</h2>
+      <p>About $23 a month in API usage for daily coverage of a market. The scheduled agents do the heavy reading; the human gate keeps the output worth reading. It has run unattended since late 2025, and the weekly synthesis has caught pricing moves and hiring shifts I would have missed on my own.</p>
+
+      <h2>What I took from it</h2>
+      <p>Agent reliability is a design problem before it is a model problem. The interesting engineering here was not the prompts, it was deciding what the agent is not allowed to do: write to the record without a citation, claim confidence it cannot back, or skip the human gate. Constraints made it useful.</p>
+    </article>
+
+    <div class="wrap cs-next">
+      <span class="label">Next case study</span>
+      <a href="/work/mathtutor.html">MathTutor-Qwen3-8B →</a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap foot-inner">
+      <span>© 2026 Yash Bambhroliya</span>
+      <span class="term-hint">press <kbd>`</kbd> for terminal</span>
+      <span><a href="/">yashb.me</a></span>
+    </div>
+  </footer>
+
+  <div class="loss-widget" aria-hidden="true">
+    <svg viewBox="0 0 96 28">
+      <path class="curve" data-loss-curve d="M2 3 C 14 4, 18 12, 28 15 S 46 21, 58 23 S 84 25.5, 94 26"/>
+    </svg>
+    <span>epoch <span data-loss-epoch>1</span>/3 · loss <span class="loss-val" data-loss-live>2.310</span></span>
+  </div>
+
+  <div class="term" data-term aria-label="Terminal" role="dialog">
+    <div class="term-out" data-term-out></div>
+    <div class="term-in">
+      <span class="ps1">yash@yashb.me:~$</span>
+      <input type="text" data-term-in autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input">
+    </div>
+  </div>
+
+  <script src="/vendor/gsap.min.js" defer></script>
+  <script src="/vendor/ScrollTrigger.min.js" defer></script>
+  <script src="/vendor/SplitText.min.js" defer></script>
+  <script src="/vendor/ScrambleTextPlugin.min.js" defer></script>
+  <script src="/vendor/lenis.min.js" defer></script>
+  <script src="/js/site.js" defer></script>
+</body>
+</html>

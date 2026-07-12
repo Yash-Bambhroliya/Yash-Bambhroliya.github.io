@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MathTutor-Qwen3-8B · case study · Yash Bambhroliya</title>
+  <meta name="description" content="Fine-tuning Qwen3-8B into a K-12 math tutor with QLoRA, and building the LLM-as-judge evaluation that grades it. Full numbers, including the judge bias I had to fix.">
+  <link rel="canonical" href="https://yashb.me/work/mathtutor.html">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/site.css">
+  <script>(function(){var d=document.documentElement;d.classList.add("js");try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")d.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="MathTutor-Qwen3-8B: fine-tuning and evaluation">
+  <meta property="og:description" content="Two training rounds, an LLM-as-judge pipeline, and a judge bias caught and corrected. Beat the base model on 5 of 5 metrics.">
+  <meta property="og:url" content="https://yashb.me/work/mathtutor.html">
+</head>
+<body data-temp="0.7" data-page="case">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="preloader" aria-hidden="true">
+    <div class="preloader-log">
+      <div class="row"><span class="prompt">$</span> yash --load work/mathtutor</div>
+      <div class="row"><span class="ok">✓</span> checkpoint restored</div>
+    </div>
+  </div>
+
+  
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="/">Yash Bambhroliya</a>
+      <nav class="nav-links" aria-label="Site">
+        <a href="/#work" aria-current="page">Work</a>
+        <a href="/#experience">Experience</a>
+        <a href="/#contact">Contact</a>
+        <button class="temp-ctl" type="button" data-temp-ctl aria-label="Cycle temperature: changes how animated the site is">
+          temp <span class="t-val" data-temp-val>0.7</span>
+        </button>
+        <button class="theme-toggle" type="button" aria-label="Switch color theme">
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17a5 5 0 110-10 5 5 0 010 10zm0-2a3 3 0 100-6 3 3 0 000 6zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM1 11h3v2H1v-2zm19 0h3v2h-3v-2zM4.2 5.6l1.4-1.4 2.1 2.1-1.4 1.4-2.1-2.1zm12.1 12.1l1.4-1.4 2.1 2.1-1.4 1.4-2.1-2.1zm2.1-13.5l1.4 1.4-2.1 2.1-1.4-1.4 2.1-2.1zM5.6 19.8l-1.4-1.4 2.1-2.1 1.4 1.4-2.1 2.1z"/></svg>
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 14.5A8.5 8.5 0 019.5 3a8.5 8.5 0 1011.5 11.5z"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap cs-header">
+      <a class="back" href="/#work">← All work</a>
+      <p class="kicker">Case study 01</p>
+      <h1>Fine-tuning a math tutor, and catching its judge lying</h1>
+      <dl class="cs-meta">
+        <div><dt>What</dt><dd>QLoRA fine-tune of Qwen3-8B</dd></div>
+        <div><dt>My part</dt><dd>Everything: data, training, evaluation</dd></div>
+        <div><dt>When</dt><dd>2026</dd></div>
+        <div><dt>Model</dt><dd><a href="https://huggingface.co/Yash0707/MathTutor-Qwen3-8B-QLoRA">Hugging Face</a></dd></div>
+        <div><dt>Eval code</dt><dd><a href="https://github.com/Yash-Bambhroliya/MathTutor-Evaluation">GitHub</a></dd></div>
+      </dl>
+    </div>
+
+    <article class="wrap cs-body prose">
+      <h2>The goal</h2>
+      <p>I wanted a small model that behaves like a tutor, not an answer machine. Given a K-12 math question, it should teach: state the goal, walk the steps, show an example, and end with a checkpoint question. And when a student asks it for something that is not math, it should decline and steer back to math instead of playing along.</p>
+      <p>Base Qwen3-8B is good at math. It is not good at tutoring, and it will happily write Python when a student asks. That gap is what the fine-tune targets.</p>
+
+      <h2>Data</h2>
+      <p>No suitable dataset existed, so I generated one: seed problems first, then multi-turn tutoring conversations built on them, then an automated cleaning pass. Every response in the final set follows the Goal, Steps, Example, Checkpoint structure. The final training set had 612 curated examples, which is small on purpose. I wanted to know how far careful curation gets you before scale does.</p>
+
+      <h2>Two training rounds</h2>
+      <p>The first round (LoRA rank 32, 526 examples) looked fine in the loss curves and failed in practice. Out-of-domain refusal improved a lot, but pedagogy got worse than the base model. The tutor structure was there on the surface while the actual teaching quality regressed.</p>
+      <p>For the second round I dropped the rank to 16, grew and re-curated the data to 612 examples, and added NEFTune noise injection. That combination fixed the pedagogy regression while keeping the refusal gains. The lesson that stuck with me: for behavior-shaping fine-tunes, data quality and a smaller adapter beat a bigger adapter on noisier data.</p>
+
+      <h2>The evaluation</h2>
+      <p>I evaluated both the base model and the fine-tune on 50 held-out prompts: 42 math questions across grade levels and 8 out-of-domain traps (coding requests, general chat, homework in other subjects). Claude Sonnet 4 scored each response alone, without seeing the other model's answer, in randomized order, on five criteria from 1 to 5: correctness, pedagogy, structure, faithfulness, and refusal.</p>
+
+      <h2>The judge was rewarding the wrong thing</h2>
+      <p>Reading the judge's raw JSON, I found scores that made no sense. When a student asked for Python help, the base model wrote a working bubble sort, and the judge gave it correctness 5. The code was correct. But a math tutor writing Python on request is a failure, not a win. The judge was also inconsistent on refusals, scoring the same kind of response as N/A one time and 5 another.</p>
+      <p>Averaged over everything, these errors quietly inflated the base model's numbers. I corrected the methodology by scoring each metric only where it applies: correctness and pedagogy on the 42 math prompts, refusal on the 8 out-of-domain prompts, structure and faithfulness on all 50. Both the raw and corrected scores are in the repo, so anyone can check the difference.</p>
+
+      <h2>Results</h2>
+
+      <figure class="viz" role="group" aria-label="Bar chart comparing base Qwen3-8B and the fine-tuned MathTutor across five criteria">
+        <p class="viz-title">Judge scores, base vs fine-tuned (corrected)</p>
+        <p class="viz-sub">50 held-out prompts, scale 1 to 5, Claude Sonnet 4 as judge</p>
+        <svg viewBox="0 0 640 300" aria-hidden="true">
+          <g>
+            <line class="grid-line" x1="36" y1="10"  x2="636" y2="10"/>
+            <line class="grid-line" x1="36" y1="60"  x2="636" y2="60"/>
+            <line class="grid-line" x1="36" y1="110" x2="636" y2="110"/>
+            <line class="grid-line" x1="36" y1="160" x2="636" y2="160"/>
+            <line class="grid-line" x1="36" y1="210" x2="636" y2="210"/>
+            <line class="axis-line" x1="36" y1="260" x2="636" y2="260"/>
+          </g>
+          <g>
+            <text class="tick-label" x="28" y="14"  text-anchor="end">5</text>
+            <text class="tick-label" x="28" y="64"  text-anchor="end">4</text>
+            <text class="tick-label" x="28" y="114" text-anchor="end">3</text>
+            <text class="tick-label" x="28" y="164" text-anchor="end">2</text>
+            <text class="tick-label" x="28" y="214" text-anchor="end">1</text>
+            <text class="tick-label" x="28" y="264" text-anchor="end">0</text>
+          </g>
+          <!-- bars: base (gray) then fine-tuned (blue), 22px wide, 2px surface gap -->
+          <g>
+            <path class="series-base" data-tip="Correctness, base: 4.79" d="M73 24.5 q0 -4 4 -4 h14 q4 0 4 4 V260 H73 Z"/>
+            <path class="series-ft"   data-tip="Correctness, fine-tuned: 4.88" d="M97 20 q0 -4 4 -4 h14 q4 0 4 4 V260 H97 Z"/>
+            <path class="series-base" data-tip="Pedagogy, base: 4.52" d="M192 38 q0 -4 4 -4 h14 q4 0 4 4 V260 H192 Z"/>
+            <path class="series-ft"   data-tip="Pedagogy, fine-tuned: 4.56" d="M216 36 q0 -4 4 -4 h14 q4 0 4 4 V260 H216 Z"/>
+            <path class="series-base" data-tip="Structure, base: 4.80" d="M311 24 q0 -4 4 -4 h14 q4 0 4 4 V260 H311 Z"/>
+            <path class="series-ft"   data-tip="Structure, fine-tuned: 4.86" d="M335 21 q0 -4 4 -4 h14 q4 0 4 4 V260 H335 Z"/>
+            <path class="series-base" data-tip="Faithfulness, base: 4.62" d="M430 33 q0 -4 4 -4 h14 q4 0 4 4 V260 H430 Z"/>
+            <path class="series-ft"   data-tip="Faithfulness, fine-tuned: 4.80" d="M454 24 q0 -4 4 -4 h14 q4 0 4 4 V260 H454 Z"/>
+            <path class="series-base" data-tip="Refusal, base: 3.14" d="M549 107 q0 -4 4 -4 h14 q4 0 4 4 V260 H549 Z"/>
+            <path class="series-ft"   data-tip="Refusal, fine-tuned: 4.12" d="M573 58 q0 -4 4 -4 h14 q4 0 4 4 V260 H573 Z"/>
+          </g>
+          <!-- direct labels on the fine-tuned series only -->
+          <g>
+            <text class="direct-label" x="108" y="12" text-anchor="middle">4.88</text>
+            <text class="direct-label" x="227" y="28" text-anchor="middle">4.56</text>
+            <text class="direct-label" x="346" y="13" text-anchor="middle">4.86</text>
+            <text class="direct-label" x="465" y="16" text-anchor="middle">4.80</text>
+            <text class="direct-label" x="584" y="50" text-anchor="middle">4.12</text>
+          </g>
+          <g>
+            <text class="cat-label" x="96"  y="278" text-anchor="middle">Correctness</text>
+            <text class="cat-label" x="96"  y="292" text-anchor="middle" opacity="0.75">math only</text>
+            <text class="cat-label" x="215" y="278" text-anchor="middle">Pedagogy</text>
+            <text class="cat-label" x="215" y="292" text-anchor="middle" opacity="0.75">math only</text>
+            <text class="cat-label" x="334" y="278" text-anchor="middle">Structure</text>
+            <text class="cat-label" x="334" y="292" text-anchor="middle" opacity="0.75">all 50</text>
+            <text class="cat-label" x="453" y="278" text-anchor="middle">Faithfulness</text>
+            <text class="cat-label" x="453" y="292" text-anchor="middle" opacity="0.75">all 50</text>
+            <text class="cat-label" x="572" y="278" text-anchor="middle">Refusal</text>
+            <text class="cat-label" x="572" y="292" text-anchor="middle" opacity="0.75">OOD only</text>
+          </g>
+        </svg>
+        <div class="viz-legend" aria-hidden="true">
+          <span class="key"><span class="swatch" style="background: var(--baseline)"></span>Base Qwen3-8B</span>
+          <span class="key"><span class="swatch" style="background: var(--accent)"></span>MathTutor (FT-2)</span>
+        </div>
+        <details>
+          <summary>View as table</summary>
+          <table>
+            <thead><tr><th>Metric</th><th>Base Qwen3-8B</th><th>MathTutor FT-2</th><th>Delta</th></tr></thead>
+            <tbody>
+              <tr><td>Correctness (math only)</td><td>4.79</td><td>4.88</td><td>+0.09</td></tr>
+              <tr><td>Pedagogy (math only)</td><td>4.52</td><td>4.56</td><td>+0.04</td></tr>
+              <tr><td>Structure (all 50)</td><td>4.80</td><td>4.86</td><td>+0.06</td></tr>
+              <tr><td>Faithfulness (all 50)</td><td>4.62</td><td>4.80</td><td>+0.18</td></tr>
+              <tr><td>Refusal (OOD only)</td><td>3.14</td><td>4.12</td><td>+0.98</td></tr>
+            </tbody>
+          </table>
+        </details>
+      </figure>
+
+      <p>The fine-tune wins on all five criteria. The two that matter most to me are refusal, up 0.98 on a 5-point scale, because that was the whole point of the tune, and faithfulness, up 0.18, because a tutor that invents math is worse than no tutor. The in-domain gains are small and honest: base Qwen3-8B was already strong at math, and I am not going to pretend 612 examples changed that.</p>
+
+      <h2>Limitations I know about</h2>
+      <ul>
+        <li>The judge prefers longer responses. I documented this verbosity bias rather than pretending it away.</li>
+        <li>Single-turn scoring only. It cannot measure how the tutor handles a real back-and-forth.</li>
+        <li>No human evaluation yet. LLM-as-judge with one judge is a proxy, and I treat it as one.</li>
+        <li>Eight OOD prompts is a small refusal sample. The +0.98 is directionally solid but the exact number is noisy.</li>
+      </ul>
+
+      <h2>What I took from it</h2>
+      <p>The fine-tuning itself was the easy half. The work that changed the outcome was reading raw judge output line by line, noticing the scores that should not exist, and rebuilding the methodology so the metric measures the behavior I actually care about. I now assume every eval is wrong until I have read its failures myself.</p>
+    </article>
+
+    <div class="wrap cs-next">
+      <span class="label">Next case study</span>
+      <a href="/work/hgd-eval.html">HGD Memory Engine evaluation →</a>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap foot-inner">
+      <span>© 2026 Yash Bambhroliya</span>
+      <span class="term-hint">press <kbd>`</kbd> for terminal</span>
+      <span><a href="/">yashb.me</a></span>
+    </div>
+  </footer>
+
+  <div class="loss-widget" aria-hidden="true">
+    <svg viewBox="0 0 96 28">
+      <path class="curve" data-loss-curve d="M2 3 C 14 4, 18 12, 28 15 S 46 21, 58 23 S 84 25.5, 94 26"/>
+    </svg>
+    <span>epoch <span data-loss-epoch>1</span>/3 · loss <span class="loss-val" data-loss-live>2.310</span></span>
+  </div>
+
+  <div class="term" data-term aria-label="Terminal" role="dialog">
+    <div class="term-out" data-term-out></div>
+    <div class="term-in">
+      <span class="ps1">yash@yashb.me:~$</span>
+      <input type="text" data-term-in autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal input">
+    </div>
+  </div>
+
+  <script src="/vendor/gsap.min.js" defer></script>
+  <script src="/vendor/ScrollTrigger.min.js" defer></script>
+  <script src="/vendor/SplitText.min.js" defer></script>
+  <script src="/vendor/ScrambleTextPlugin.min.js" defer></script>
+  <script src="/vendor/lenis.min.js" defer></script>
+  <script src="/js/site.js" defer></script>
+</body>
+</html>
