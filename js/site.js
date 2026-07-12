@@ -244,7 +244,7 @@
           var journeyAt = function (y) {
             if (!anchors.length) return { j: 0, lb: 0 };
             if (y <= anchors[0].b) {
-              var lb0 = anchors[0].lookBack ? Math.sin(Math.PI * ssm((y - anchors[0].a) / (anchors[0].b - anchors[0].a))) : 0;
+              var lb0 = anchors[0].lookBack ? Math.sin(Math.PI * ssm((y - anchors[0].a) / (anchors[0].b - anchors[0].a))) * 0.35 : 0;
               return { j: anchors[0].t, lb: lb0 };
             }
             for (var i = 0; i < anchors.length - 1; i++) {
@@ -257,7 +257,7 @@
               if (y <= nxt.b) {
                 /* resting at a station */
                 var local = ssm((y - nxt.a) / Math.max(1, nxt.b - nxt.a));
-                return { j: nxt.t, lb: nxt.lookBack ? Math.sin(Math.PI * local) * 0.85 : 0 };
+                return { j: nxt.t, lb: nxt.lookBack ? Math.sin(Math.PI * local) * 0.35 : 0 };
               }
             }
             return { j: anchors[anchors.length - 1].t, lb: 0 };
@@ -932,11 +932,11 @@
           var hr = h.getBoundingClientRect();
           var y = hr.bottom + sy + 12;
           var runEnd = hr.left + Math.min(hr.width, 320);
-          pts.push({ x: laneX, y: y - 130 });
-          pts.push({ x: hr.left - 4, y: y });
+          pts.push({ x: laneX, y: y - 140 });
+          pts.push({ x: hr.left - 6, y: y });
           pts.push({ x: runEnd, y: y });
-          pts.push({ x: hr.left - 4, y: y + 8 });
-          pts.push({ x: laneX, y: y + 150 });
+          pts.push({ x: hr.left - 6, y: y + 12 });
+          pts.push({ x: laneX, y: y + 170 });
         });
 
         /* terminate under the email address */
@@ -949,14 +949,28 @@
           pts.push({ x: er.left + er.width, y: ey });
         }
 
-        /* smooth polyline: quadratic through midpoints */
-        var d = "M" + pts[0].x.toFixed(1) + " " + pts[0].y.toFixed(1);
-        for (var i = 1; i < pts.length - 1; i++) {
-          var mx = (pts[i].x + pts[i + 1].x) / 2;
-          var my = (pts[i].y + pts[i + 1].y) / 2;
-          d += " Q" + pts[i].x.toFixed(1) + " " + pts[i].y.toFixed(1) + " " + mx.toFixed(1) + " " + my.toFixed(1);
+        /* rounded polyline: straight runs with bounded elbows. The quadratic
+           control sits on the vertex itself, so the curve can never overshoot
+           a corner or loop the way midpoint smoothing did */
+        var clean = [pts[0]];
+        for (var i = 1; i < pts.length; i++) {
+          var prev = clean[clean.length - 1];
+          if (Math.abs(pts[i].x - prev.x) + Math.abs(pts[i].y - prev.y) > 2) clean.push(pts[i]);
         }
-        var last = pts[pts.length - 1];
+        var R = 26;
+        var d = "M" + clean[0].x.toFixed(1) + " " + clean[0].y.toFixed(1);
+        for (i = 1; i < clean.length - 1; i++) {
+          var p0 = clean[i - 1], p1 = clean[i], p2 = clean[i + 1];
+          var v1x = p1.x - p0.x, v1y = p1.y - p0.y;
+          var v2x = p2.x - p1.x, v2y = p2.y - p1.y;
+          var l1 = Math.hypot(v1x, v1y), l2 = Math.hypot(v2x, v2y);
+          if (l1 < 1 || l2 < 1) continue;
+          var r1 = Math.min(R, l1 / 2), r2 = Math.min(R, l2 / 2);
+          d += " L" + (p1.x - v1x / l1 * r1).toFixed(1) + " " + (p1.y - v1y / l1 * r1).toFixed(1);
+          d += " Q" + p1.x.toFixed(1) + " " + p1.y.toFixed(1) + " " +
+            (p1.x + v2x / l2 * r2).toFixed(1) + " " + (p1.y + v2y / l2 * r2).toFixed(1);
+        }
+        var last = clean[clean.length - 1];
         d += " L" + last.x.toFixed(1) + " " + last.y.toFixed(1);
         path.setAttribute("d", d);
 
