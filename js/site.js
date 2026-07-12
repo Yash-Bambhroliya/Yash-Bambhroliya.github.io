@@ -492,6 +492,170 @@
       TRAINER.ready() ? showNote() : TRAINER.on("ready", showNote);
     })();
 
+    /* ---------- watch it learn: the training run, replayed by scroll ----------
+       One stage, three honest sources, never blended:
+       live      the model training in this tab right now
+       restored  the run this device recorded on an earlier visit
+       recorded  a bundled recording of the same network, for browsers
+                 that skip live training. Always labeled. */
+
+    (function () {
+      var section = document.querySelector("[data-learn]");
+      if (!section) return;
+      var el = {
+        sub: section.querySelector("[data-learn-sub]"),
+        badge: section.querySelector("[data-learn-badge]"),
+        step: section.querySelector("[data-learn-step]"),
+        clock: section.querySelector("[data-learn-clock]"),
+        loss: section.querySelector("[data-learn-loss]"),
+        sample: section.querySelector("[data-learn-sample]"),
+        stage: section.querySelector("[data-learn-stagelabel]"),
+        name: section.querySelector("[data-learn-name]"),
+        endnote: section.querySelector("[data-learn-endnote]"),
+        dot: section.querySelector("[data-learn-dot]")
+      };
+
+      function stageLabel(s) {
+        if (s.phase === "warmup") {
+          if ((s.acc || 0) < 0.2) return "pure noise";
+          if ((s.acc || 0) < 0.75) return "letters are forming";
+          return "it can spell my name";
+        }
+        if (s.loss === null || s.loss > 3.1) return "now reading everything I wrote";
+        if (s.loss > 2.65) return "real words are appearing";
+        return "writing in my voice";
+      }
+
+      var nameSpans = [];
+      (function buildName() {
+        var html = "";
+        for (var i = 0; i < HERO_TARGET.length; i++) {
+          html += "<span>" + (HERO_TARGET[i] === " " ? "&nbsp;" : esc(HERO_TARGET[i])) + "</span>";
+        }
+        el.name.innerHTML = html;
+        nameSpans = Array.prototype.slice.call(el.name.children);
+      })();
+
+      function renderSnap(s) {
+        el.step.textContent = "step " + s.step.toLocaleString("en-US");
+        el.clock.textContent = (s.ms / 1000).toFixed(1) + "s of cpu";
+        el.loss.textContent = s.loss === null ? "loss warming" : (s.phase === "warmup" ? "name loss " : "loss ") + s.loss.toFixed(3);
+        var txt = (s.sample || "").replace(/\s+/g, " ");
+        /* the seed is a fixed prompt, shown dim; everything after it is output */
+        el.sample.innerHTML = (s.seed ? '<span class="learn-seed">' + esc(s.seed) + "</span>" : "") + esc(s.seed ? txt.replace(/^\s+/, "") : txt.trim());
+        el.stage.textContent = stageLabel(s);
+        var nm = s.name || "";
+        for (var i = 0; i < nameSpans.length; i++) {
+          var t = HERO_TARGET[i], g = nm[i] || " ";
+          if (g === t) {
+            nameSpans[i].className = "on";
+            nameSpans[i].innerHTML = t === " " ? "&nbsp;" : esc(t);
+          } else {
+            nameSpans[i].className = "";
+            nameSpans[i].innerHTML = g === " " || g === "\n" ? "&nbsp;" : esc(g);
+          }
+        }
+      }
+
+      function setup(getSnaps, kind) {
+        var live = kind === "live";
+        if (kind === "restored" && el.sub) {
+          el.sub.textContent = "A network trained on your device during an earlier visit and saved in your browser. This is its training run, replayed.";
+        } else if (kind === "recorded" && el.sub) {
+          el.sub.textContent = "Your browser skipped live training this visit, so this is a recording of the same network learning from scratch, step by step.";
+        }
+
+        var doneMs = 0;
+        function setBadge() {
+          if (kind === "recorded") { el.badge.textContent = "recorded run"; return; }
+          if (kind === "restored") { el.badge.textContent = "your earlier run"; return; }
+          if (doneMs) { el.badge.textContent = "trained in " + Math.round(doneMs / 1000) + "s"; el.badge.classList.remove("pulse"); }
+          else { el.badge.textContent = "live now"; el.badge.classList.add("pulse"); }
+        }
+        if (live && window.TRAINER) {
+          TRAINER.on("done", function (d) { doneMs = d.trainedMs || 1; setBadge(); });
+        }
+        setBadge();
+
+        function endnote(last) {
+          var secs = Math.max(1, Math.round(last.ms / 1000));
+          return kind === "recorded"
+            ? "from random noise to my name in " + secs + "s of cpu. recorded from a real run of this exact network."
+            : "from random noise to my name in " + secs + "s of cpu, right here in your browser. nothing prerendered, nothing sent anywhere.";
+        }
+
+        var lastP = 0;
+        function renderAtP(p) {
+          lastP = p;
+          var snaps = getSnaps();
+          var n = snaps.length;
+          if (!n) return;
+          var t = Math.min(1, p / 0.9);
+          renderSnap(snaps[Math.min(n - 1, Math.round(t * (n - 1)))]);
+          if (el.dot) el.dot.style.left = (p * 100).toFixed(2) + "%";
+          var done = p > 0.93;
+          section.classList.toggle("learn-done", done);
+          if (done) el.endnote.textContent = endnote(snaps[n - 1]);
+        }
+
+        section.hidden = false;
+
+        if (reduced || !hasGsap || typeof ScrollTrigger === "undefined") {
+          renderAtP(1);
+          return;
+        }
+
+        ScrollTrigger.create({
+          trigger: section, start: "top top", end: "+=240%",
+          pin: true, scrub: 0.35,
+          onUpdate: function (self) { renderAtP(self.progress); }
+        });
+        ScrollTrigger.refresh();
+        renderAtP(0);
+
+        /* while the model is still training, fresh moments join the replay */
+        if (live && window.TRAINER) {
+          TRAINER.on("snap", function () { renderAtP(lastP); });
+        }
+      }
+
+      function useRecording() {
+        fetch("/data/replay.json").then(function (r) {
+          if (!r.ok) throw new Error("replay " + r.status);
+          return r.json();
+        }).then(function (j) {
+          if (!j || !j.snaps || j.snaps.length < 6) return;
+          setup(function () { return j.snaps; }, "recorded");
+        }).catch(function () { /* no data, the section stays hidden */ });
+      }
+
+      var settled = false;
+      function decide() {
+        if (settled) return;
+        settled = true;
+        if (TRAINER.eligible() && TRAINER.ready()) {
+          if (TRAINER.restored() && TRAINER.history().length < 6) { useRecording(); return; }
+          setup(function () { return TRAINER.history(); }, TRAINER.restored() ? "restored" : "live");
+        } else {
+          useRecording();
+        }
+      }
+
+      if (!isHome) return;
+      if (window.TRAINER) {
+        /* decided() flips before the worker boots; only ready() or a firm
+           ineligible verdict settles which source this page gets */
+        if (TRAINER.ready() || (TRAINER.decided() && !TRAINER.eligible())) {
+          decide();
+        } else {
+          TRAINER.on("ready", decide);
+          TRAINER.on("decided", function (s) { if (!s.eligible) decide(); });
+        }
+      } else {
+        useRecording();
+      }
+    })();
+
     /* ---------- logprob tooltips ---------- */
 
     var lps = document.querySelectorAll(".lp");
@@ -628,6 +792,36 @@
             if (liveEpoch) liveEpoch.textContent = String(Math.min(3, 1 + Math.floor(p * 3)));
           }
         });
+      }
+
+      /* a restored checkpoint that is not retraining still gets a real
+         instrument: its recorded history, never the scroll toy */
+      if (window.TRAINER && lossLabel && curve) {
+        var restoredWidget = function () {
+          if (widgetReal || !TRAINER.restored()) return;
+          var h = TRAINER.history();
+          if (!h.length) return;
+          widgetReal = true;
+          if (scrollDriver) scrollDriver.kill();
+          curve.style.strokeDasharray = "none";
+          curve.style.strokeDashoffset = "0";
+          var last = h[h.length - 1];
+          lossLabel.innerHTML = "trained on your device · step " + last.step +
+            ' · loss <span class="loss-val">' + (last.loss === null ? "warming" : last.loss.toFixed(3)) + "</span>";
+          var pts = h.filter(function (s) { return s.loss !== null; });
+          if (pts.length > 1) {
+            var mx = 0.001;
+            pts.forEach(function (s) { if (s.loss > mx) mx = s.loss; });
+            var pth = "";
+            for (var i = 0; i < pts.length; i++) {
+              var x = 2 + (92 * i / (pts.length - 1));
+              var y = 3 + 23 * (1 - pts[i].loss / mx);
+              pth += (i === 0 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1) + " ";
+            }
+            curve.setAttribute("d", pth.trim());
+          }
+        };
+        TRAINER.ready() ? restoredWidget() : TRAINER.on("ready", restoredWidget);
       }
 
       /* when the tab is really training, the widget becomes an instrument:

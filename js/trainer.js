@@ -11,7 +11,7 @@
     decided: false, eligible: false, ready: false, restored: false,
     tier: null, params: 0, vocab: 0,
     lastStep: null, doneInfo: null, temp: 0.7,
-    corpusHash: null, startedAt: 0
+    corpusHash: null, startedAt: 0, snaps: []
   };
   var pendingSamples = {};
   var reqId = 0;
@@ -131,14 +131,19 @@
       state.params = d.params;
       state.vocab = d.vocab;
       state.restored = !!d.restored;
+      if (d.snaps) state.snaps = d.snaps;
       emit("decided", state);
       emit("ready", state);
     } else if (d.type === "step") {
       state.lastStep = d;
+      if (d.snap) state.snaps.push(d.snap);
       emit("step", d);
+      if (d.snap) emit("snap", d.snap);
     } else if (d.type === "done") {
       state.doneInfo = d;
+      if (d.snap) state.snaps.push(d.snap);
       emit("done", d);
+      if (d.snap) emit("snap", d.snap);
       persist();
     } else if (d.type === "sampled") {
       var cb = pendingSamples[d.reqId];
@@ -167,6 +172,7 @@
     eligible: function () { return state.decided && state.eligible; },
     ready: function () { return state.ready; },
     restored: function () { return state.restored; },
+    history: function () { return state.snaps; },
     state: function () { return state; },
     start: function (mode) { if (worker && state.ready) { state.startedAt = performance.now(); worker.postMessage({ type: "start", mode: mode || "background" }); } },
     setMode: function (mode) { if (worker) worker.postMessage({ type: "mode", mode: mode }); },
@@ -187,11 +193,13 @@
     gradcheck: function () { if (worker) worker.postMessage({ type: "gradcheck" }); },
     stats: function () {
       var s = state.lastStep || {};
+      var lastSnap = state.snaps.length ? state.snaps[state.snaps.length - 1] : null;
       return {
         tier: state.tier, params: state.params, vocab: state.vocab,
-        step: s.step || 0, tokensSeen: s.tokensSeen || 0,
-        trainedMs: s.trainedMs || (state.doneInfo && state.doneInfo.trainedMs) || 0,
-        loss: s.corpusLoss, phase: s.phase, restored: state.restored
+        step: s.step || (lastSnap && lastSnap.step) || 0, tokensSeen: s.tokensSeen || 0,
+        trainedMs: s.trainedMs || (state.doneInfo && state.doneInfo.trainedMs) || (lastSnap && lastSnap.ms) || 0,
+        loss: s.corpusLoss !== undefined && s.corpusLoss !== null ? s.corpusLoss : (lastSnap ? lastSnap.loss : undefined),
+        phase: s.phase, restored: state.restored
       };
     },
     on: function (name, fn) {

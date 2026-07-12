@@ -351,8 +351,37 @@ function makeCache(B, T, V, D, H) {
 
 /* ---------- training driver ---------- */
 
-var RUN = { active: false, mode: null, phase: "warmup", step: 0, tokens: 0, epoch: 1, ema: null, emaName: null, temp: 0.7, startAt: 0, trainedMs: 0, lossHistory: [], lastAcc: 0 };
+var RUN = { active: false, mode: null, phase: "warmup", step: 0, tokens: 0, epoch: 1, ema: null, emaName: null, temp: 0.7, startAt: 0, trainedMs: 0, lossHistory: [], lastAcc: 0, snaps: [], nextSnapAt: 1, finishTarget: 0, doneReason: null };
 var HEADLINE = "Yash Bambhroliya";
+
+/* a snapshot is what the model wrote at one moment of its life: a free-run
+   sample, its greedy attempt at the name, and the loss. The recorded set
+   replays the whole learning arc, noise to prose, on scroll.
+   The sample is seeded with a short prose prefix (shown dimmed on the page,
+   never claimed as output); a newline seed collapses into name loops because
+   the corpus oversamples the name after line breaks. */
+var SNAP_SEED = "I ";
+function snapshot() {
+  var hl = headline(M.model, HEADLINE, 0);
+  /* same display gate as the loss widget: corpus loss right after the phase
+     switch is a spike from name memorization, shown as warming until real */
+  var burned = RUN.phase !== "main" || (RUN.ema !== null && RUN.ema < Math.log(M.V) + 0.15);
+  var displayLoss = RUN.phase === "warmup" ? RUN.emaName : (burned ? RUN.ema : null);
+  return {
+    step: RUN.step,
+    ms: Math.round(RUN.trainedMs),
+    phase: RUN.phase,
+    loss: displayLoss === null ? null : Math.round(displayLoss * 1000) / 1000,
+    acc: Math.round(hl.acc * 100) / 100,
+    name: hl.text,
+    seed: SNAP_SEED,
+    sample: sampleText(M.model, 140, 0.8, SNAP_SEED)
+  };
+}
+
+function scheduleNextSnap() {
+  RUN.nextSnapAt = RUN.step < 20 ? RUN.step + 2 : Math.max(RUN.step + 3, Math.round(RUN.step * 1.22));
+}
 
 function trainLoop() {
   if (!RUN.active || !M) return;
@@ -368,14 +397,21 @@ function trainLoop() {
     RUN.mainStart = RUN.step;
     RUN.lossHistory = [];
   }
-  /* heavy headline maintenance right after the switch prevents forgetting */
-  var maint = RUN.phase === "main" && RUN.step - RUN.mainStart < 150 ? 0.3 : 0.1;
-  var nameBatch = RUN.phase === "warmup" ? true : Math.random() < maint;
+  /* heavy headline maintenance right after the switch prevents forgetting,
+     then decays: over-rehearsing the name turns free samples into name loops.
+     A slipped probe raises the rate back up until the name re-locks. */
+  var msMain = RUN.phase === "main" ? RUN.step - RUN.mainStart : 0;
+  var maint = msMain < 150 ? 0.3 : msMain < 400 ? 0.1 : 0.05;
+  if (RUN.phase === "main" && RUN.lastAcc < 0.9) maint = 0.3;
+  var nameBatch = RUN.phase === "warmup" || RUN.finishTarget ? true : Math.random() < maint;
   var T_use = RUN.phase === "warmup" ? Math.min(16, T) : T;
 
   var ids, ptrs, starts, N, h0;
-  if (nameBatch) {
+  if (nameBatch && (RUN.phase === "warmup" || RUN.lastAcc < 0.9 || RUN.finishTarget)) {
+    /* the name slipped below the probe threshold: repair with pure batches */
     ids = M.nameIds; ptrs = M.namePtrs; starts = M.nameStarts; N = M.nameIds.length; h0 = M.nameH0;
+  } else if (nameBatch) {
+    ids = M.mixIds; ptrs = M.mixPtrs; starts = M.mixStarts; N = M.mixIds.length; h0 = M.mixH0;
   } else {
     ids = M.ids; ptrs = M.ptrs; starts = M.starts; N = M.ids.length; h0 = M.corpusH0;
   }
@@ -400,6 +436,14 @@ function trainLoop() {
     RUN.ema = RUN.ema === null ? loss : 0.9 * RUN.ema + 0.1 * loss;
   }
   RUN.trainedMs += performance.now() - t0;
+
+  var snap = null;
+  if (RUN.step >= RUN.nextSnapAt && RUN.snaps.length < 64) {
+    snap = snapshot();
+    RUN.snaps.push(snap);
+    scheduleNextSnap();
+  }
+
   /* corpus loss right after the phase switch is a spike (the net just
      memorized 19 chars); burn in 10 steps before showing it */
   var mainBurnedIn = RUN.phase === "main" && RUN.ema !== null && RUN.ema < Math.log(M.V) + 0.15;
@@ -411,7 +455,7 @@ function trainLoop() {
 
   var msg = { type: "step", step: RUN.step, phase: RUN.phase, emaLoss: displayLoss, corpusLoss: RUN.ema, tokensSeen: RUN.tokens, epoch: RUN.epoch, trainedMs: RUN.trainedMs };
   if (RUN.mainStart !== undefined) msg.mainStep = RUN.step - RUN.mainStart;
-  if (RUN.mode === "preloader" || RUN.step % 3 === 0) {
+  if (RUN.mode === "preloader" || RUN.step % 3 === 0 || RUN.finishTarget) {
     var hl = headline(M.model, HEADLINE, RUN.temp);
     msg.headlineSample = hl.text;
     msg.headlineAcc = hl.acc;
@@ -419,15 +463,29 @@ function trainLoop() {
   }
   if (RUN.step % 5 === 0) msg.sample = sampleText(M.model, 90, RUN.temp);
   if (RUN.step % 10 === 0 && RUN.lossHistory.length > 1) msg.lossHistory = RUN.lossHistory.slice(-120);
+  if (snap) msg.snap = snap;
   postMessage(msg);
 
   /* the preloader UI exits on its own clock; the worker only stops itself
      on corpus convergence or the background training cap */
   var capMs = M.trainCapMs;
   var converged = RUN.ema !== null && RUN.ema < 1.35;
-  if (converged || RUN.trainedMs > capMs) {
+  if (!RUN.finishTarget && (converged || RUN.trainedMs > capMs)) {
+    RUN.doneReason = converged ? "converged" : "cap";
+    /* finishing pass: if the name slipped, spend the last few dozen steps
+       on pure name batches so the run ends where it began, locked */
+    RUN.finishTarget = RUN.lastAcc < 0.95 ? RUN.step + 40 : RUN.step;
+  }
+  if (RUN.finishTarget && (RUN.lastAcc >= 0.95 || RUN.step >= RUN.finishTarget)) {
     RUN.active = false;
-    postMessage({ type: "done", reason: converged ? "converged" : "cap", emaLoss: RUN.ema, step: RUN.step, trainedMs: RUN.trainedMs });
+    /* the replay's last frame is the model's actual final state */
+    var finalSnap = null;
+    if (RUN.snaps.length < 64 && (!RUN.snaps.length || RUN.snaps[RUN.snaps.length - 1].step < RUN.step)) {
+      finalSnap = snapshot();
+      RUN.snaps.push(finalSnap);
+      scheduleNextSnap();
+    }
+    postMessage({ type: "done", reason: RUN.doneReason, emaLoss: RUN.ema, step: RUN.step, trainedMs: RUN.trainedMs, snap: finalSnap });
     return;
   }
   setTimeout(trainLoop, 0);
@@ -474,7 +532,7 @@ onmessage = function (e) {
     var starts = new Int32Array(B), ptrs = new Int32Array(B);
     var span = Math.floor(ids.length / B);
     for (var b = 0; b < B; b++) { starts[b] = b * span; ptrs[b] = b * span; }
-    /* headline curriculum corpus: the name line repeated */
+    /* headline curriculum corpus: the name line repeated (warmup only) */
     var nameLine = "\n" + HEADLINE + ". ";
     var nameText = "";
     while (nameText.length < B * T * 4 + nameLine.length + 1) nameText += nameLine;
@@ -483,11 +541,26 @@ onmessage = function (e) {
     var nameStarts = new Int32Array(B), namePtrs = new Int32Array(B);
     var nameSpan = Math.floor(nameIds.length / B);
     for (b = 0; b < B; b++) { nameStarts[b] = b * nameSpan; namePtrs[b] = b * nameSpan; }
+    /* maintenance stream: the name spliced into varied corpus context.
+       Rehearsing the pure loop teaches "name follows name" and free samples
+       collapse into name spam; this keeps the spelling sharp instead */
+    var mixText = "";
+    while (mixText.length < B * T * 24) {
+      var cut = Math.floor(Math.random() * Math.max(1, text.length - 400));
+      mixText += nameLine + text.slice(cut, cut + 100 + Math.floor(Math.random() * 140));
+    }
+    var mixIds = new Int32Array(mixText.length);
+    for (i = 0; i < mixText.length; i++) mixIds[i] = stoi[mixText[i]] !== undefined ? stoi[mixText[i]] : 0;
+    var mixStarts = new Int32Array(B), mixPtrs = new Int32Array(B);
+    var mixSpan = Math.floor(mixIds.length / B);
+    for (b = 0; b < B; b++) { mixStarts[b] = b * mixSpan; mixPtrs[b] = b * mixSpan; }
     M = {
       model: model, cache: makeCache(B, T, V, D, H),
       ids: ids, starts: starts, ptrs: ptrs,
       nameIds: nameIds, nameStarts: nameStarts, namePtrs: namePtrs,
+      mixIds: mixIds, mixStarts: mixStarts, mixPtrs: mixPtrs,
       nameH0: new Float32Array(B * H), corpusH0: new Float32Array(B * H),
+      mixH0: new Float32Array(B * H),
       batchIds: new Int32Array(B * T), targets: new Int32Array(B * T),
       B: B, T: T, V: V, D: D, H: H,
       stoi: stoi, itos: itos,
@@ -498,9 +571,14 @@ onmessage = function (e) {
     };
     if (d.weights) {
       var w = new Float32Array(d.weights);
-      if (w.length === model.total) { model.flat.set(w); RUN.step = d.meta && d.meta.step || 0; RUN.tokens = d.meta && d.meta.tokensSeen || 0; RUN.trainedMs = d.meta && d.meta.trainedMs || 0; RUN.ema = d.meta && d.meta.emaLoss || null; if (d.meta && d.meta.lossHistory) RUN.lossHistory = Array.prototype.slice.call(d.meta.lossHistory); }
+      if (w.length === model.total) { model.flat.set(w); RUN.step = d.meta && d.meta.step || 0; RUN.tokens = d.meta && d.meta.tokensSeen || 0; RUN.trainedMs = d.meta && d.meta.trainedMs || 0; RUN.ema = d.meta && d.meta.emaLoss || null; if (d.meta && d.meta.lossHistory) RUN.lossHistory = Array.prototype.slice.call(d.meta.lossHistory); if (d.meta && d.meta.snaps) RUN.snaps = d.meta.snaps; }
+      if (RUN.step > 0) scheduleNextSnap();
+    } else {
+      /* the birth frame: what an untrained net writes is the honest zero */
+      RUN.snaps = [snapshot()];
+      RUN.nextSnapAt = 1;
     }
-    postMessage({ type: "ready", tier: tier, vocab: V, params: model.total, benchMsTok: benchMsTok, restored: !!d.weights });
+    postMessage({ type: "ready", tier: tier, vocab: V, params: model.total, benchMsTok: benchMsTok, restored: !!d.weights, snaps: RUN.snaps });
   } else if (d.type === "start") {
     if (!M) return;
     RUN.mode = d.mode || "background";
@@ -511,7 +589,13 @@ onmessage = function (e) {
     RUN.active = false;
     if (d.type === "stop") postMessage({ type: "done", reason: "stopped", emaLoss: RUN.ema, step: RUN.step, trainedMs: RUN.trainedMs });
   } else if (d.type === "resume") {
-    if (M && !RUN.active) { RUN.active = true; trainLoop(); }
+    if (M && !RUN.active) {
+      /* a resumed run earns a fresh budget past the cap it already hit */
+      RUN.finishTarget = 0;
+      if (RUN.trainedMs > M.trainCapMs - 5000) M.trainCapMs = RUN.trainedMs + 30000;
+      RUN.active = true;
+      trainLoop();
+    }
   } else if (d.type === "temp") {
     RUN.temp = d.value;
   } else if (d.type === "sample") {
@@ -526,7 +610,7 @@ onmessage = function (e) {
     var buf = M.model.flat.slice().buffer;
     postMessage({
       type: "weights", buffer: buf,
-      meta: { step: RUN.step, tokensSeen: RUN.tokens, trainedMs: RUN.trainedMs, emaLoss: RUN.ema, lossHistory: new Float32Array(RUN.lossHistory) }
+      meta: { step: RUN.step, tokensSeen: RUN.tokens, trainedMs: RUN.trainedMs, emaLoss: RUN.ema, lossHistory: new Float32Array(RUN.lossHistory), snaps: RUN.snaps }
     }, [buf]);
   } else if (d.type === "gradcheck") {
     var res = gradCheck();

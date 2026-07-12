@@ -1277,6 +1277,184 @@ html:not(.js) .tok { visibility: visible; }
 .site-evals div { border: 1px solid var(--hairline); border-radius: 8px; padding: 0.6rem 0.75rem; }
 .site-evals .ev { display: block; color: var(--ink); font-size: 1rem; font-weight: 600; margin-top: 0.15rem; font-variant-numeric: tabular-nums; }
 
+/* ---------- watch it learn: the training run replayed by scroll ---------- */
+
+.learn { position: relative; padding-block: 0; }
+
+.learn-pin {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: clamp(3rem, 7vh, 5rem) 0;
+  box-sizing: border-box;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--paper) 90%, transparent) 12%,
+    color-mix(in srgb, var(--paper) 90%, transparent) 88%,
+    transparent 100%
+  );
+}
+
+.learn-inner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.8rem, 2.2vh, 1.4rem);
+}
+
+.learn-head {
+  font-size: clamp(1.6rem, 3.2vw, 2.5rem);
+  letter-spacing: -0.03em;
+  margin: 0 0 0.6rem;
+}
+
+.learn-top .kicker { margin-bottom: 0.7rem; }
+
+.learn-sub {
+  max-width: var(--measure);
+  color: var(--ink-2);
+  margin: 0;
+}
+
+.learn-stage {
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: clamp(1rem, 2.4vw, 1.7rem);
+  background: color-mix(in srgb, var(--plane) 92%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.learn-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.learn-badge {
+  color: var(--accent);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0.05rem 0.7em;
+}
+
+.learn-badge.pulse::before {
+  content: "";
+  display: inline-block;
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 0.5em;
+  animation: learnPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes learnPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.learn-sample {
+  font-family: var(--font-mono);
+  font-size: clamp(1rem, 2vw, 1.45rem);
+  line-height: 1.6;
+  color: var(--ink-2);
+  min-height: 4.8em;
+  max-width: 64ch;
+  overflow-wrap: break-word;
+}
+
+.learn-sample .learn-seed { color: var(--ink-3); opacity: 0.65; }
+
+.learn-stagelabel {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0;
+}
+
+.learn-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 6vw, 4.2rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.learn-name span {
+  display: inline-block;
+  min-width: 0.55em;
+  text-align: center;
+  white-space: pre;
+  color: var(--ink-3);
+  opacity: 0.45;
+  filter: blur(2.5px);
+  transform: translateY(0.06em) scale(0.97);
+  transition: color 0.3s, opacity 0.3s, filter 0.3s, transform 0.3s, text-shadow 0.3s;
+}
+
+.learn-name span.on {
+  color: var(--ink);
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+  text-shadow: 0 0 22px var(--glow);
+}
+
+.learn-done .learn-name span.on {
+  text-shadow: 0 0 26px var(--glow), 0 0 64px var(--glow);
+}
+
+.learn-endnote {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-3);
+  max-width: var(--measure);
+  margin: 0;
+  min-height: 1.6em;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.5s, transform 0.5s;
+}
+
+.learn-done .learn-endnote { opacity: 1; transform: none; }
+
+.learn-rail {
+  position: relative;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.learn-rail-dot {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--glow);
+  transform: translate(-50%, -50%);
+}
+
+@media (max-height: 660px) {
+  .learn-sub { display: none; }
+  .learn-sample { min-height: 3.3em; font-size: 1rem; }
+  .learn-name { font-size: clamp(1.6rem, 5.5vw, 3rem); }
+}
+
 /* ---------- v3: debug panel ---------- */
 
 .dbg {

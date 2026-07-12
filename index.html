@@ -99,7 +99,7 @@
         </a>
       </div>
 
-      <p class="live-note" data-live-note hidden>live: this page is training a small AI on my writing, right now, on your device. the glowing point on the terrain drops as it learns. press <kbd>`</kbd> to talk to it.</p>
+      <p class="live-note" data-live-note hidden>live: this page is training a small AI on my writing, right now, on your device. scroll down to watch it learn, or press <kbd>`</kbd> to talk to it.</p>
 
       <p class="tailored-line" data-fit-heroline hidden></p>
 
@@ -112,6 +112,31 @@
           <button type="submit" class="jd-submit">score the fit</button>
         </form>
         <div class="fit-card" data-fit-card hidden></div>
+      </div>
+    </section>
+
+    <section class="learn" data-learn hidden>
+      <div class="learn-pin" data-learn-pin>
+        <div class="wrap learn-inner">
+          <div class="learn-top">
+            <p class="kicker">epoch 00 · watch it learn</p>
+            <h2 class="learn-head">It learns while you read</h2>
+            <p class="learn-sub" data-learn-sub>When this page opened, a tiny neural network woke up on your device knowing nothing. It has been teaching itself to write like me ever since. Scroll to replay everything it has learned.</p>
+          </div>
+          <div class="learn-stage" aria-hidden="true">
+            <div class="learn-meta">
+              <span class="learn-badge" data-learn-badge>replay</span>
+              <span data-learn-step>step 0</span>
+              <span data-learn-clock>0.0s of cpu</span>
+              <span data-learn-loss>loss warming</span>
+            </div>
+            <div class="learn-sample" data-learn-sample></div>
+            <p class="learn-stagelabel" data-learn-stagelabel>pure noise</p>
+          </div>
+          <div class="learn-name" data-learn-name aria-hidden="true"></div>
+          <p class="learn-endnote" data-learn-endnote></p>
+          <div class="learn-rail" aria-hidden="true"><span class="learn-rail-dot" data-learn-dot></span></div>
+        </div>
       </div>
     </section>
 
