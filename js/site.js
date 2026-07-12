@@ -140,13 +140,69 @@
             window.SCENE.setPointer(0, 0, false);
           });
         }
-        /* the terrain recedes as the hero scrolls away */
-        var heroEl = document.querySelector(".hero");
-        if (heroEl && typeof ScrollTrigger !== "undefined") {
+        /* the continuous descent: the whole page is one walk down the valley.
+           Sections are stations at elevations; the camera rests while you
+           read and travels between sections. The ball is the model on the
+           same path, so you can look up and see how far it has learned. */
+        if (typeof ScrollTrigger !== "undefined") {
+          var STATIONS = [
+            { sel: ".hero", t: 0 },
+            { sel: "[data-learn]", t: 0.16, spacer: true },
+            { sel: "#work", t: 0.42 },
+            { sel: "#experience", t: 0.62, lookBack: true },
+            { sel: ".skills", t: 0.8 },
+            { sel: "#contact", t: 1 }
+          ];
+          var anchors = [];
+          var measureStations = function () {
+            anchors = [];
+            var vh = window.innerHeight;
+            STATIONS.forEach(function (st) {
+              var el = document.querySelector(st.sel);
+              if (!el) return;
+              var target = st.spacer ? (el.closest(".pin-spacer") || el) : el;
+              var r = target.getBoundingClientRect();
+              if (!r.height) return; /* hidden sections join once they exist */
+              var top = r.top + window.scrollY, bottom = r.bottom + window.scrollY;
+              var a = top - vh * 0.7;
+              var b = Math.max(a + 1, bottom - vh * 0.85);
+              anchors.push({ a: a, b: b, t: st.t, lookBack: !!st.lookBack });
+            });
+            anchors.sort(function (x, y) { return x.a - y.a; });
+          };
+          var ssm = function (v) { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); };
+          var journeyAt = function (y) {
+            if (!anchors.length) return { j: 0, lb: 0 };
+            if (y <= anchors[0].b) {
+              var lb0 = anchors[0].lookBack ? Math.sin(Math.PI * ssm((y - anchors[0].a) / (anchors[0].b - anchors[0].a))) : 0;
+              return { j: anchors[0].t, lb: lb0 };
+            }
+            for (var i = 0; i < anchors.length - 1; i++) {
+              var cur = anchors[i], nxt = anchors[i + 1];
+              if (y <= nxt.a) {
+                /* traveling between stations */
+                var p = ssm((y - cur.b) / Math.max(1, nxt.a - cur.b));
+                return { j: cur.t + (nxt.t - cur.t) * p, lb: 0 };
+              }
+              if (y <= nxt.b) {
+                /* resting at a station */
+                var local = ssm((y - nxt.a) / Math.max(1, nxt.b - nxt.a));
+                return { j: nxt.t, lb: nxt.lookBack ? Math.sin(Math.PI * local) * 0.85 : 0 };
+              }
+            }
+            return { j: anchors[anchors.length - 1].t, lb: 0 };
+          };
+          ScrollTrigger.addEventListener("refresh", measureStations);
+          measureStations();
           ScrollTrigger.create({
-            trigger: heroEl, start: "top top", end: "bottom 25%", scrub: 0.6,
-            onUpdate: function (self) { window.SCENE.setRecede(self.progress); }
+            start: 0, end: "max",
+            onUpdate: function () {
+              var r = journeyAt(window.scrollY);
+              window.SCENE.setJourney(r.j, r.lb);
+            }
           });
+          var r0 = journeyAt(window.scrollY);
+          window.SCENE.setJourney(r0.j, r0.lb);
         }
         /* the network scene is opt-in now (terminal: model), never a wall
            between a recruiter and the work */
@@ -194,6 +250,21 @@
       if (window.SCENE) window.SCENE.setTraining(value);
     }
 
+    /* the ball is the model walking the same valley as the reader: warmup
+       covers the upper slope, corpus learning the rest, done is the basin */
+    if (isHome && window.TRAINER) {
+      TRAINER.on("step", function (d) {
+        if (!realPath) return;
+        if (d.phase === "warmup") {
+          if (d.headlineAcc !== undefined) driveConverge(0.12 + 0.38 * d.headlineAcc);
+        } else if (d.corpusLoss) {
+          var lp = Math.max(0, Math.min(1, (4.45 - d.corpusLoss) / 2.45));
+          driveConverge(0.5 + 0.5 * lp);
+        }
+      });
+      TRAINER.on("done", function () { if (realPath) driveConverge(1); });
+    }
+
     function endPreloader(instant) {
       if (!pre || pre.classList.contains("done")) return;
       try { sessionStorage.setItem("run", "done"); } catch (e) {}
@@ -225,8 +296,14 @@
            still trains quietly so the instruments stay real */
         if (!reduced && isHome && window.TRAINER) {
           var seenStart = function () {
-            if (!TRAINER.restored()) { realPath = true; TRAINER.start("background"); }
-            driveConverge(1);
+            if (!TRAINER.restored()) {
+              /* fresh model in the background: the ball travels honestly */
+              realPath = true;
+              TRAINER.start("background");
+            } else {
+              /* a finished checkpoint has already reached the basin */
+              driveConverge(1);
+            }
           };
           TRAINER.ready() ? seenStart() : TRAINER.on("ready", seenStart);
         }
@@ -322,10 +399,7 @@
             if (epochEl) epochEl.textContent = String(d.epoch);
             if (sampleEl && d.headlineSample) renderMorphInto(sampleEl, d.headlineSample);
           }
-          if (d.headlineAcc !== undefined) {
-            driveConverge(0.15 + 0.85 * d.headlineAcc, 400);
-            maybeExit(d.headlineAcc);
-          }
+          if (d.headlineAcc !== undefined) maybeExit(d.headlineAcc);
         });
         startWhenReady("preloader");
         setTimeout(function () { maybeExit(0); }, capMs + 3500);

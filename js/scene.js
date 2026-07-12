@@ -14,11 +14,15 @@ import * as THREE from "../vendor/three.module.min.js";
     raf: null, t0: 0,
     training: 0, trainingShown: 0,
     interlude: 0, recede: 0,
+    journey: 0, journeyShown: 0, lookBack: 0, lookShown: 0,
     mouse: { x: 0, y: 0, on: false, sx: 0, sy: 0 },
     ball: null, ballGlow: null, trail: null, trailPts: [],
     terrain: null, terrainWire: null, net: null, pulseMats: [],
     path: null, camCurve: null, coarse: false, verts: 0
   };
+
+  function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+  function smoothstep(v) { v = clamp01(v); return v * v * (3 - 2 * v); }
 
   function cssColor(name) {
     var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -46,34 +50,34 @@ import * as THREE from "../vendor/three.module.min.js";
     return smoothNoise(x, y) * 0.55 + smoothNoise(x * 2.1, y * 2.1) * 0.28 + smoothNoise(x * 4.3, y * 4.3) * 0.17;
   }
 
-  /* the descent path: high ridge to the basin, along which the ball rolls */
+  /* the descent path: high ridge to the basin. The ball (the model) and the
+     camera (the reader) both travel it; the whole page is this one walk. */
   function pathPoint(t) {
-    var x = -55 + t * 95;
-    var z = -20 + Math.sin(t * Math.PI * 1.35) * 22 - t * 6;
+    var x = -70 + t * 130;
+    var z = -16 + Math.sin(t * Math.PI * 1.8) * 24 - t * 10;
     return new THREE.Vector2(x, z);
   }
 
   function terrainHeight(x, z) {
     var h = fbm(x * 0.035 + 7.3, z * 0.035 + 2.9) * 26 - 6;
-    /* carve the valley along the descent path so the ball reads naturally */
+    /* carve the valley along the descent path so the walk reads naturally */
     var best = 1e9;
-    for (var i = 0; i <= 20; i++) {
-      var p = pathPoint(i / 20);
+    for (var i = 0; i <= 30; i++) {
+      var p = pathPoint(i / 30);
       var dx = x - p.x, dz = z - p.y;
       var d = dx * dx + dz * dz;
       if (d < best) best = d;
     }
     var carve = Math.exp(-best / 260);
-    var descent = 18 - 0 * x;
     h = h * (1 - carve * 0.72);
     /* overall slope: the far left is high ground, the basin sits right */
-    h += (1 - (x + 80) / 160) * 14;
+    h += (1 - (x + 95) / 190) * 16;
     return h;
   }
 
   function buildTerrain() {
-    var segX = S.coarse ? 90 : 150, segZ = S.coarse ? 54 : 90;
-    var geo = new THREE.PlaneGeometry(190, 110, segX, segZ);
+    var segX = S.coarse ? 110 : 190, segZ = S.coarse ? 66 : 116;
+    var geo = new THREE.PlaneGeometry(270, 165, segX, segZ);
     geo.rotateX(-Math.PI / 2);
     var pos = geo.attributes.position;
     for (var i = 0; i < pos.count; i++) {
@@ -135,12 +139,17 @@ import * as THREE from "../vendor/three.module.min.js";
     return ball;
   }
 
-  function ballPos(t) {
+  /* world-space position on the descent path */
+  function pathPos3(t, lift) {
     var p = pathPoint(t);
     var v = new THREE.Vector3(p.x, 0, p.y);
-    v.y = terrainHeight(p.x, p.y) + 1.6;
+    v.y = terrainHeight(p.x, p.y) + (lift || 0);
     v.add(S.terrain.position);
     return v;
+  }
+
+  function ballPos(t) {
+    return pathPos3(t, 1.6);
   }
 
   /* ---------- the network (interlude scene) ---------- */
@@ -242,6 +251,8 @@ import * as THREE from "../vendor/three.module.min.js";
 
     /* smooth the driven values */
     S.trainingShown += (S.training - S.trainingShown) * 0.04;
+    S.journeyShown += (S.journey - S.journeyShown) * 0.055;
+    S.lookShown += (S.lookBack - S.lookShown) * 0.05;
     S.mouse.sx += (S.mouse.x - S.mouse.sx) * 0.06;
     S.mouse.sy += (S.mouse.y - S.mouse.sy) * 0.06;
 
@@ -264,38 +275,55 @@ import * as THREE from "../vendor/three.module.min.js";
       S.trail.geometry.setDrawRange(0, S.trailPts.length);
     }
 
-    /* net pulses while anything is alive */
-    for (i = 0; i < S.pulseMats.length; i++) {
-      var m = S.pulseMats[i];
-      m.opacity = m.userData.base * (0.7 + 0.5 * Math.sin(t * 2 + i * 1.7));
+    /* the network exists only inside the fly-through; idling in the fog it
+       reads as an artifact, worst on the light theme */
+    var netOn = S.interlude > 0.001;
+    if (S.net) {
+      S.net.visible = netOn;
+      if (netOn) {
+        for (i = 0; i < S.pulseMats.length; i++) {
+          var m = S.pulseMats[i];
+          m.opacity = m.userData.base * (0.7 + 0.5 * Math.sin(t * 2 + i * 1.7));
+        }
+        S.net.rotation.z = Math.sin(t * 0.12) * 0.05;
+      }
     }
-    if (S.net) S.net.rotation.z = Math.sin(t * 0.12) * 0.05;
 
-    /* camera: hero rig blended into the interlude fly-through */
+    /* camera: the reader walks the same valley the model descends.
+       interlude fly-through > journey path rig > hero vista, blended. */
     var cam = S.camera;
-    if (S.interlude > 0.001) {
+    if (netOn) {
       var p = Math.min(1, S.interlude);
-      var eased = p;
-      cam.position.copy(S.camCurve.getPointAt(eased));
+      cam.position.copy(S.camCurve.getPointAt(p));
       var look = new THREE.Vector3().copy(S.net.position);
-      look.z += 40 + eased * 70;
+      look.z += 40 + p * 70;
       cam.lookAt(look);
     } else {
       var rx = S.mouse.on ? S.mouse.sx : 0;
       var ry = S.mouse.on ? S.mouse.sy : 0;
-      cam.position.set(
-        HERO_POS.x + rx * 7,
-        HERO_POS.y + 10 * S.recede - ry * 4,
-        HERO_POS.z + S.recede * 26
-      );
-      var lk = HERO_LOOK.clone();
-      lk.y -= S.recede * 8;
-      cam.lookAt(lk);
-    }
+      var j = clamp01(S.journeyShown);
 
-    /* the terrain steps back and dims once you scroll past the hero */
-    if (S.terrainWire) {
-      S.terrainWire.material.opacity = 0.32 * (1 - S.recede * 0.75);
+      /* path rig: third person, above and behind the walk position */
+      var cur = pathPos3(j, 0);
+      var ahead = pathPos3(Math.min(1, j + 0.05), 0);
+      var behind = pathPos3(Math.max(0, j - 0.05), 0);
+      var dir = new THREE.Vector3().subVectors(ahead, behind);
+      if (dir.lengthSq() < 1e-6) dir.set(1, 0, 0);
+      dir.normalize();
+      var pathPos = cur.clone().addScaledVector(dir, -14);
+      pathPos.y = Math.max(pathPos.y + 10, cur.y + 7.5);
+      var lookAhead = pathPos3(Math.min(1, j + 0.1), 2);
+      var lookBehind = pathPos3(Math.max(0, j - 0.12), 4);
+      var pathLook = lookAhead.lerp(lookBehind, clamp01(S.lookShown));
+
+      /* hero vista holds the top of the page, then hands over to the walk */
+      var w = smoothstep(j / 0.12);
+      var pos = new THREE.Vector3(HERO_POS.x, HERO_POS.y, HERO_POS.z).lerp(pathPos, w);
+      var lk = HERO_LOOK.clone().lerp(pathLook, w);
+      pos.x += rx * (7 - 4.5 * w);
+      pos.y -= ry * (4 - 2.5 * w);
+      cam.position.copy(pos);
+      cam.lookAt(lk);
     }
 
     S.renderer.render(S.scene, S.camera);
@@ -354,6 +382,12 @@ import * as THREE from "../vendor/three.module.min.js";
 
     setTraining: function (v) { S.training = Math.max(S.training, Math.min(1, v)); },
     setInterlude: function (p) { S.interlude = p; },
+    /* reader position along the descent, 0 hero to 1 contact; lookBack turns
+       the camera up the valley for the how-far-we-came beat */
+    setJourney: function (j, lookBack) {
+      S.journey = Math.max(0, Math.min(1, j));
+      S.lookBack = Math.max(0, Math.min(1, lookBack || 0));
+    },
     setRecede: function (r) { S.recede = Math.max(0, Math.min(1, r)); },
     setPointer: function (x, y, on) {
       S.mouse.on = on;
