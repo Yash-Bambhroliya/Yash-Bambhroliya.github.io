@@ -136,7 +136,7 @@
       /* dusk path: hue climbs through magenta so blue arrives at amber */
       var ENDS = {
         dark: { cold: [0.72, 0.13, 250], warm: [0.79, 0.12, 425] },
-        light: { cold: [0.52, 0.14, 255], warm: [0.57, 0.12, 420] }
+        light: { cold: [0.5, 0.16, 30], warm: [0.55, 0.13, 60] }
       };
 
       function stageWord(j) {
@@ -878,7 +878,7 @@
         grad.setAttribute("y2", String(docH));
         var light = (root.getAttribute("data-theme") || "dark") === "light";
         var stops = light
-          ? ["oklch(0.52 0.14 255)", "oklch(0.55 0.13 340)", "oklch(0.57 0.12 60)"]
+          ? ["oklch(0.5 0.16 30)", "oklch(0.52 0.15 42)", "oklch(0.55 0.13 60)"]
           : ["oklch(0.72 0.13 250)", "oklch(0.755 0.125 340)", "oklch(0.79 0.12 65)"];
         grad.innerHTML = "";
         stops.forEach(function (c, i) {
@@ -1005,6 +1005,78 @@
       gsap.ticker.add(update);
     })();
 
+    /* ---------- the construction toggle: press g ----------
+       The site exposes its own drawing: baseline grid, column guides,
+       and the real spacing between sections written into the gaps. */
+
+    (function () {
+      var on = false, layer = null;
+
+      function build() {
+        layer = document.createElement("div");
+        layer.className = "drawing";
+        layer.setAttribute("aria-hidden", "true");
+        var docH = document.documentElement.scrollHeight;
+        layer.style.height = docH + "px";
+
+        var wrap = document.querySelector("main .wrap") || document.querySelector(".wrap");
+        if (wrap) {
+          var r = wrap.getBoundingClientRect();
+          var cs = getComputedStyle(wrap);
+          var left = r.left + parseFloat(cs.paddingLeft);
+          var right = r.right - parseFloat(cs.paddingRight);
+          var guides = [r.left, left, (left + right) / 2, right, r.right];
+          var measure = left + 42 * 16;
+          if (measure < right - 40) guides.push(measure);
+          guides.forEach(function (x) {
+            var v = document.createElement("i");
+            v.className = "dg-v";
+            v.style.left = x.toFixed(1) + "px";
+            layer.appendChild(v);
+          });
+
+          /* the real vertical rhythm, written into the gaps it measures */
+          var blocks = document.querySelectorAll("main > section, main > div.ticker");
+          var prev = null;
+          blocks.forEach(function (el) {
+            var b = el.getBoundingClientRect();
+            var top = b.top + window.scrollY, bottom = b.bottom + window.scrollY;
+            if (prev !== null) {
+              var gap = Math.round(top - prev);
+              if (gap > 12) {
+                var lab = document.createElement("span");
+                lab.className = "dg-label";
+                lab.textContent = "Δ " + gap + "px";
+                lab.style.left = (left - 34).toFixed(1) + "px";
+                lab.style.top = ((prev + top) / 2).toFixed(1) + "px";
+                layer.appendChild(lab);
+              }
+            }
+            prev = bottom;
+          });
+        }
+        document.body.appendChild(layer);
+      }
+
+      function setGrid(next) {
+        on = next === undefined ? !on : !!next;
+        body.classList.toggle("blueprint", on);
+        if (layer) { layer.remove(); layer = null; }
+        if (on) build();
+      }
+      window.__grid = setGrid;
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key !== "g" && e.key !== "G") return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        var t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+        setGrid();
+      });
+
+      window.addEventListener("resize", function () { if (on) setGrid(true); });
+    })();
+
     /* ---------- logprob tooltips ---------- */
 
     var lps = document.querySelectorAll(".lp");
@@ -1070,6 +1142,7 @@
         gsap.from(el, {
           y: 26,
           duration: 0.85, ease: "power3.out",
+          delay: el.classList.contains("work-row") ? 0.18 : 0,
           scrollTrigger: { trigger: el, start: "top 90%", once: true }
         });
       });
@@ -1410,7 +1483,7 @@
 
       var CMDS = {
         help: function () {
-          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>model</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>model</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>grid</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
         },
         model: function () {
           if (!window.SCENE || !document.body.classList.contains("scene-on")) {
@@ -1491,6 +1564,9 @@
           termPrint('email: <a href="mailto:yashbambhroliya1@gmail.com">yashbambhroliya1@gmail.com</a> · github: <a href="https://github.com/Yash-Bambhroliya">Yash-Bambhroliya</a> · hf: <a href="https://huggingface.co/Yash0707">Yash0707</a>');
         },
         whoami: function () { termPrint("recruiter, probably. good instincts."); },
+        grid: function () {
+          if (window.__grid) { closeTerm(); window.__grid(); termPrint("construction layer toggled", "t-good"); }
+        },
         theme: function () {
           var next = currentTheme() === "dark" ? "light" : "dark";
           root.setAttribute("data-theme", next);

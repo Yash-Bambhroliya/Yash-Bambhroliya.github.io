@@ -56,24 +56,26 @@
   --elev-2: inset 0 1px 0 var(--edge-light), 0 14px 44px rgba(0, 0, 0, 0.4);
 }
 
+/* paper mode: not an inversion but a different material. Warm stock,
+   near-black ink, and the accent becomes red drafting ink. */
 :root[data-theme="light"] {
   --mode: light;
-  --paper: #fcfcfb;
-  --plane: #f9f9f7;
-  --ink: #0b0b0b;
-  --ink-2: #52514e;
-  --ink-3: #898781;
-  --hairline: #e1e0d9;
-  --baseline: #c3c2b7;
-  --accent: #2a78d6;
-  --accent-deep: #1c5cab;
-  --accent-wash: rgba(42, 120, 214, 0.08);
-  --good: #006300;
-  --ring: rgba(11, 11, 11, 0.10);
-  --glow: rgba(42, 120, 214, 0.20);
-  --edge-light: rgba(255, 255, 255, 0.9);
-  --elev-1: inset 0 1px 0 var(--edge-light), 0 1px 3px rgba(30, 28, 20, 0.07);
-  --elev-2: inset 0 1px 0 var(--edge-light), 0 12px 34px rgba(30, 28, 20, 0.1);
+  --paper: #f7f4ed;
+  --plane: #f0ece2;
+  --ink: #1c1913;
+  --ink-2: #4f4a3f;
+  --ink-3: #837c6d;
+  --hairline: #ded6c4;
+  --baseline: #bfb6a0;
+  --accent: #b23a2b;
+  --accent-deep: #8f2c1f;
+  --accent-wash: rgba(178, 58, 43, 0.08);
+  --good: #2d6a12;
+  --ring: rgba(28, 25, 19, 0.12);
+  --glow: rgba(178, 58, 43, 0.2);
+  --edge-light: rgba(255, 255, 255, 0.85);
+  --elev-1: inset 0 1px 0 var(--edge-light), 0 1px 3px rgba(48, 42, 30, 0.09);
+  --elev-2: inset 0 1px 0 var(--edge-light), 0 12px 34px rgba(48, 42, 30, 0.12);
 }
 
 /* deliberately no prefers-color-scheme override: dark is the design.
@@ -125,7 +127,7 @@ body::after {
 }
 
 :root[data-theme="light"] body::before { background: none; }
-:root[data-theme="light"] body::after { opacity: 0.03; }
+:root[data-theme="light"] body::after { opacity: 0.055; }
 
 body {
   margin: 0;
@@ -1701,6 +1703,20 @@ html:not(.js) .tok { visibility: visible; }
   white-space: nowrap;
 }
 
+.bz-doc {
+  position: absolute;
+  left: 7px;
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+  writing-mode: vertical-rl;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
 @media (max-width: 900px), (pointer: coarse) {
   .bezel { display: none; }
 }
@@ -1888,6 +1904,290 @@ html:not(.js) .tok { visibility: visible; }
 
 @media (prefers-reduced-motion: reduce) {
   .term { transition: none; }
+}
+
+/* ============================================================
+   THE WORKING DRAWING (pure-UI layer)
+   One layout idea per section, two moments of scale violence,
+   registration details, and the construction toggle.
+   ============================================================ */
+
+/* registration mark: every kicker carries its plus */
+.kicker::before { content: "+ "; color: var(--baseline); }
+
+/* ---------- work: alternating asymmetric spreads ---------- */
+
+.work-row {
+  grid-template-columns: minmax(7rem, 11rem) 1fr auto;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  align-items: start;
+  padding-block: clamp(2.2rem, 5.5vw, 4rem);
+  position: relative;
+}
+
+.work-row .ghost { display: none; }
+
+.work-row .num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(4rem, 8vw, 7.5rem);
+  line-height: 0.8;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--baseline);
+  letter-spacing: -0.02em;
+  transition: -webkit-text-stroke-color var(--dur-2) var(--ease-out);
+}
+
+.work-row:hover .num { -webkit-text-stroke-color: var(--accent); }
+
+.work-row h3 { font-size: clamp(1.7rem, 3.2vw, 2.5rem); }
+
+.work-row:nth-child(even) .num { grid-column: 2; grid-row: 1; text-align: right; }
+.work-row:nth-child(even) > span:not(.num):not(.meta):not(.ghost) { grid-column: 1; grid-row: 1; }
+
+.work-row .meta {
+  writing-mode: vertical-rl;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  align-self: start;
+  padding-top: 0.35rem;
+}
+
+/* the inspect frame: hovering exposes the drawing around the row */
+.work-row::after {
+  content: "";
+  position: absolute;
+  inset: 0.9rem -1.25rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-out);
+  background:
+    linear-gradient(var(--accent), var(--accent)) 0 0 / 12px 1px,
+    linear-gradient(var(--accent), var(--accent)) 0 0 / 1px 12px,
+    linear-gradient(var(--accent), var(--accent)) 100% 0 / 12px 1px,
+    linear-gradient(var(--accent), var(--accent)) 100% 0 / 1px 12px,
+    linear-gradient(var(--accent), var(--accent)) 0 100% / 12px 1px,
+    linear-gradient(var(--accent), var(--accent)) 0 100% / 1px 12px,
+    linear-gradient(var(--accent), var(--accent)) 100% 100% / 12px 1px,
+    linear-gradient(var(--accent), var(--accent)) 100% 100% / 1px 12px;
+  background-repeat: no-repeat;
+}
+
+.work-row:hover::after { opacity: 0.75; }
+
+/* rules draw before content settles. The originals used border-top per
+   row with overflow hidden for the retired ghost drift; both yield here
+   so the animated rules and the inspect frame can exist. */
+.work-list { border-top: 1px solid var(--hairline); }
+.work-row { border-top-color: transparent; overflow: visible; }
+.work-row:last-child { border-bottom-color: transparent; }
+.work-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--hairline);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform var(--dur-3) var(--ease-out);
+}
+.work-row.in::before { transform: scaleX(1); }
+
+/* ---------- experience: the timeline is the figure ---------- */
+
+.xp { --xp-pad: clamp(1.75rem, 4vw, 3rem); position: relative; padding-left: var(--xp-pad); }
+
+.xp::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 1px;
+  background: var(--hairline);
+  transform-origin: 50% 0;
+}
+
+@supports selector(:has(a)) {
+  .xp::before { transform: scaleY(0); transition: transform 1.1s var(--ease-out) 0.1s; }
+  .xp:has(.reveal.in)::before { transform: scaleY(1); }
+}
+
+.xp-row { position: relative; padding-block: 1.9rem; border-bottom: 0; }
+
+.xp-row::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--xp-pad));
+  top: 2.55rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1px solid var(--accent);
+  transform: translateX(-3.5px);
+}
+
+.xp-row .when { color: var(--ink-3); }
+
+/* ---------- skills: a type specimen table ---------- */
+
+.skills dl {
+  display: grid;
+  grid-template-columns: minmax(11rem, 16rem) 1fr;
+  border-top: 1px solid var(--hairline);
+  gap: 0;
+}
+
+.skills dt {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding: 1.15rem 1rem 1.15rem 0;
+  border-bottom: 1px solid var(--hairline);
+  margin: 0;
+}
+
+.skills dd {
+  margin: 0;
+  padding: 1.15rem 0;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 0.98rem;
+  color: var(--ink-2);
+}
+
+/* ---------- contact: the poster ---------- */
+
+#contact {
+  min-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+.contact h2 {
+  font-family: var(--font-voice);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.15rem, 2.2vw, 1.65rem);
+  letter-spacing: 0;
+  line-height: 1.4;
+  max-width: var(--measure);
+  margin-bottom: clamp(1.5rem, 4vh, 3rem);
+}
+
+.contact .email {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.4rem, 6vw, 6.5rem);
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  white-space: nowrap;
+  text-decoration: none;
+  border-bottom: 0;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.contact .email:hover { color: var(--accent); }
+
+.contact-meta {
+  position: absolute;
+  top: clamp(2rem, 6vh, 4rem);
+  left: var(--pad);
+  right: var(--pad);
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ---------- the construction toggle (press g) ---------- */
+
+.drawing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 91;
+}
+
+.drawing::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 23px,
+    color-mix(in srgb, var(--accent) 9%, transparent) 23px 24px
+  );
+}
+
+.dg-v {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 100%;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+.dg-label {
+  position: absolute;
+  writing-mode: vertical-rl;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  color: color-mix(in srgb, var(--accent) 75%, transparent);
+  transform: translate(-50%, -50%);
+  background: var(--paper);
+  padding: 0.4rem 0.1rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+body.blueprint section,
+body.blueprint .ticker {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+/* ---------- case figures number themselves ---------- */
+
+body[data-page="case"] .cs-body { counter-reset: fig; }
+body[data-page="case"] .viz { counter-increment: fig; }
+body[data-page="case"] .viz-title::before {
+  content: "fig. 0" counter(fig) " \00b7  ";
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+  vertical-align: 0.1em;
+}
+
+/* ---------- small screens: the spreads stack, the poster shrinks ---------- */
+
+@media (max-width: 760px) {
+  .work-row { grid-template-columns: 1fr; padding-block: 2rem; }
+  .work-row .num { font-size: 2.6rem; -webkit-text-stroke-width: 1px; }
+  .work-row:nth-child(even) .num { grid-column: 1; text-align: left; }
+  .work-row:nth-child(even) > span:not(.num):not(.meta):not(.ghost) { grid-column: 1; }
+  .work-row .meta { writing-mode: horizontal-tb; padding-top: 0; }
+  .work-row::after { display: none; }
+  .skills dl { grid-template-columns: 1fr; }
+  .skills dt { border-bottom: 0; padding-bottom: 0.2rem; }
+  .contact .email { white-space: normal; word-break: break-all; line-height: 1.15; }
+  .contact-meta { display: none; }
 }
 
 /* ---------- print ---------- */
