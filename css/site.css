@@ -91,6 +91,11 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* with JS running, Lenis owns smoothness and ScrollTrigger owns measurement;
+   CSS smooth scrolling animates native jumps underneath both and corrupts
+   pin positions. Keep it only as the no-JS fallback. */
+html.js { scroll-behavior: auto; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
