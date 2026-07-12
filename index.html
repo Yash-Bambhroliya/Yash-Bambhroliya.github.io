@@ -73,6 +73,7 @@
         <span class="coords"></span>
       </div>
       <p class="role">AI Engineer · Gujarat, India · <span class="clock" data-clock></span></p>
+      <p class="greet" data-greet hidden></p>
       <h1 aria-label="Yash Bambhroliya">
         <span class="line" aria-hidden="true"><span class="line-inner" data-type>Yash</span></span>
         <span class="line" aria-hidden="true"><span class="line-inner" data-type>Bambhroliya</span><span class="caret"></span></span>
@@ -95,6 +96,19 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
           Email
         </a>
+      </div>
+
+      <p class="tailored-line" data-fit-heroline hidden></p>
+
+      <div class="jd-panel" data-jd-panel>
+        <button class="jd-toggle" type="button" data-jd-toggle aria-expanded="false">
+          hiring? paste the job description and this page will score itself against it
+        </button>
+        <form class="jd-form" data-jd-form>
+          <textarea data-jd-input rows="6" maxlength="8000" placeholder="paste the full job description here. you get an honest fit report, gaps included, and the case studies reorder for the role. 10 reports a day, nothing is stored."></textarea>
+          <button type="submit" class="jd-submit">score the fit</button>
+        </form>
+        <div class="fit-card" data-fit-card hidden></div>
       </div>
     </section>
 
@@ -277,8 +291,11 @@
   <script src="/vendor/ScrollTrigger.min.js" defer></script>
   <script src="/vendor/SplitText.min.js" defer></script>
   <script src="/vendor/ScrambleTextPlugin.min.js" defer></script>
+  <script src="/vendor/Flip.min.js" defer></script>
   <script src="/vendor/lenis.min.js" defer></script>
   <script src="/js/trainer.js" defer></script>
   <script src="/js/site.js" defer></script>
+  <script src="/js/fit.js" defer></script>
+  <script src="/js/greet.js" defer></script>
 </body>
 </html>

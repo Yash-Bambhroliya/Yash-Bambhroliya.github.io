@@ -20,7 +20,10 @@
   document.addEventListener("DOMContentLoaded", function () {
     var body = document.body;
     var hasGsap = typeof gsap !== "undefined";
-    if (hasGsap) gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
+    if (hasGsap) {
+      gsap.registerPlugin(ScrollTrigger, SplitText, ScrambleTextPlugin);
+      if (typeof Flip !== "undefined") gsap.registerPlugin(Flip);
+    }
 
     if (savedTemp === "0.0" || savedTemp === "0.7" || savedTemp === "1.0") {
       body.setAttribute("data-temp", savedTemp);
@@ -726,7 +729,25 @@
 
       var CMDS = {
         help: function () {
-          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+        },
+        fit: function (rest) {
+          var panel = document.querySelector("[data-jd-panel]");
+          if (!panel) { termPrint("the fit panel lives on the home page"); return; }
+          if (rest && rest.length >= 100 && window.runFit) {
+            closeTerm();
+            panel.classList.add("open");
+            panel.scrollIntoView({ behavior: "smooth", block: "center" });
+            window.runFit(rest);
+            return;
+          }
+          closeTerm();
+          panel.classList.add("open");
+          var jdToggle = panel.querySelector("[data-jd-toggle]");
+          if (jdToggle) jdToggle.setAttribute("aria-expanded", "true");
+          panel.scrollIntoView({ behavior: "smooth", block: "center" });
+          var jdInput = panel.querySelector("[data-jd-input]");
+          if (jdInput) setTimeout(function () { jdInput.focus(); }, 400);
         },
         sample: function () {
           if (!window.TRAINER || !TRAINER.ready()) {
