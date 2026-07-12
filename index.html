@@ -107,8 +107,32 @@
         <button class="jd-toggle" type="button" data-jd-toggle aria-expanded="false">
           hiring? paste the job description and this page will score itself against it
         </button>
+        <div class="jd-tabs" data-jd-tabs>
+          <button type="button" class="jd-tab on" data-fit-tab="jd">paste the JD</button>
+          <button type="button" class="jd-tab" data-fit-tab="brief">no JD handy? three questions</button>
+        </div>
         <form class="jd-form" data-jd-form>
           <textarea data-jd-input rows="6" maxlength="8000" placeholder="paste the full job description here. you get an honest fit report, gaps included, and the case studies reorder for the role. 10 reports a day, nothing is stored."></textarea>
+          <button type="submit" class="jd-submit">score the fit</button>
+        </form>
+        <form class="brief-form" data-brief-form hidden>
+          <label class="brief-label">the role
+            <input type="text" data-brief-role maxlength="80" placeholder="Senior ML Engineer, AI Engineer, Backend Engineer with LLM focus">
+          </label>
+          <div class="brief-label">what it focuses on
+            <div class="brief-chips" data-brief-chips>
+              <button type="button" class="chip" data-chip="fine-tuning">fine-tuning</button>
+              <button type="button" class="chip" data-chip="serving">serving</button>
+              <button type="button" class="chip" data-chip="agents">agents</button>
+              <button type="button" class="chip" data-chip="rag">rag</button>
+              <button type="button" class="chip" data-chip="evals">evals</button>
+              <button type="button" class="chip" data-chip="media generation">media generation</button>
+              <button type="button" class="chip" data-chip="full-stack">full-stack</button>
+            </div>
+          </div>
+          <label class="brief-label">the riskiest thing about this hire, in your words (optional)
+            <input type="text" data-brief-concern maxlength="300" placeholder="great on paper but cannot ship, no real production experience, ...">
+          </label>
           <button type="submit" class="jd-submit">score the fit</button>
         </form>
         <div class="fit-card" data-fit-card hidden></div>
@@ -299,6 +323,12 @@
       </div>
     </div>
   </footer>
+
+  <div class="shared-banner" data-shared-banner hidden>
+    <span data-shared-text></span>
+    <span class="shared-status" data-shared-status></span>
+    <a href="/" data-shared-reset>see the full site</a>
+  </div>
 
   <div class="loss-widget" aria-hidden="true">
     <svg viewBox="0 0 96 28">

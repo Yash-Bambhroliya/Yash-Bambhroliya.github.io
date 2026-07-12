@@ -1455,6 +1455,141 @@ html:not(.js) .tok { visibility: visible; }
   .learn-name { font-size: clamp(1.6rem, 5.5vw, 3rem); }
 }
 
+/* ---------- interview tab + shared report link ---------- */
+
+.jd-tabs {
+  display: none;
+  gap: 1.1rem;
+  margin: 0.9rem 0 0.2rem;
+}
+
+.jd-panel.open .jd-tabs { display: flex; }
+
+.jd-tab {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 0.2rem 0;
+  cursor: pointer;
+}
+
+.jd-tab.on { color: var(--accent); border-bottom-color: var(--accent); }
+
+.brief-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 0.7rem;
+}
+
+.jd-panel:not(.open) .brief-form { display: none; }
+
+.brief-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.brief-form input[type="text"] {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--plane);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+}
+
+.brief-form input[type="text"]:focus { outline: none; border-color: var(--accent); }
+
+.brief-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.chip {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--ink-2);
+  background: none;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0.32rem 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+}
+
+.chip:hover { border-color: var(--ink-3); }
+.chip.on { border-color: var(--accent); color: var(--accent); background: var(--accent-wash); }
+
+.fit-share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0.9rem 0 0;
+}
+
+.fit-share-btn {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.fit-share-btn:hover { border-color: var(--accent); }
+
+.fit-share-note {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--ink-3);
+}
+
+.shared-banner {
+  position: fixed;
+  bottom: 0.9rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 180;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  max-width: min(92vw, 46rem);
+  background: var(--paper);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0.5rem 1.1rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-2);
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.shared-banner a { color: var(--accent); text-decoration: none; }
+.shared-banner a:hover { text-decoration: underline; }
+
+.shared-status { color: var(--ink-3); }
+.shared-status.ok { color: var(--good); }
+.shared-status.bad { color: #e05a4e; }
+
+@media (max-width: 640px) {
+  .shared-banner { white-space: normal; border-radius: 14px; }
+}
+
 /* ---------- beat the model ---------- */
 
 .learn-playline { margin: 0; }
