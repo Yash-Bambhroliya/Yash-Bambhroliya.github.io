@@ -34,7 +34,7 @@
 <body data-temp="0.7" data-page="home">
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <canvas class="field" data-field aria-hidden="true"></canvas>
+  <canvas class="field" data-scene aria-hidden="true"></canvas>
 
   <div class="preloader" aria-hidden="true">
     <div class="preloader-log">
@@ -118,6 +118,14 @@
         <span>Fine-tuning</span><span class="dot">·</span><span>QLoRA</span><span class="dot">·</span><span>AWQ</span><span class="dot">·</span><span>vLLM</span><span class="dot">·</span><span>LLM-as-judge</span><span class="dot">·</span><span>Agents</span><span class="dot">·</span><span>RAG</span><span class="dot">·</span><span>ComfyUI</span><span class="dot">·</span><span>Flux</span><span class="dot">·</span><span>Wan 2.2</span><span class="dot">·</span>
       </div>
     </div>
+
+    <section class="interlude" data-interlude aria-hidden="true">
+      <div class="i-labels">
+        <span data-i-step="0">characters in</span>
+        <span data-i-step="1">recurrent block · <span data-i-hidden>128</span> units · training in your tab</span>
+        <span data-i-step="2">next character out · <span data-i-vocab>79</span> ways to be wrong</span>
+      </div>
+    </section>
 
     <section id="work" class="wrap">
       <div class="section-head reveal">
@@ -286,7 +294,7 @@
     </div>
   </div>
 
-  <script type="module" src="/js/field.js"></script>
+  <script type="module" src="/js/scene.js"></script>
   <script src="/vendor/gsap.min.js" defer></script>
   <script src="/vendor/ScrollTrigger.min.js" defer></script>
   <script src="/vendor/SplitText.min.js" defer></script>

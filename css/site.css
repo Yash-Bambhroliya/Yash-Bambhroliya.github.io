@@ -897,10 +897,47 @@ footer a { color: var(--ink-2); }
 
 main, footer { position: relative; z-index: 2; }
 
-.field-on .hero h1 .line-inner,
-.field-on .hero .caret { opacity: 0; }
+/* the h1 stays crisp DOM type; the 3D layer is scenery behind it */
+.hero h1 { position: relative; z-index: 2; text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45); }
+:root[data-theme="light"] .hero h1 { text-shadow: none; }
 
-.field-on .hero h1 { pointer-events: none; }
+/* interlude: pinned chapter break, the camera flies through the network */
+.interlude {
+  height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.i-labels {
+  position: relative;
+  padding-bottom: 14vh;
+  width: 100%;
+  text-align: center;
+}
+
+.i-labels > span {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  font-family: var(--font-mono);
+  font-size: clamp(0.8rem, 1.6vw, 1rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  opacity: 0;
+  transition: opacity 450ms ease, transform 450ms ease;
+  white-space: nowrap;
+}
+
+.i-labels > span.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+.i-labels > span span { position: static; transform: none; opacity: inherit; color: var(--accent); }
+
+/* depth kit: content lives in a perspective space */
+.work-list, .card-grid, .xp { perspective: 1100px; }
+.card { transform-style: preserve-3d; will-change: transform; }
 
 /* ---------- v3: preloader (training run) ---------- */
 

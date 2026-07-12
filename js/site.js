@@ -121,61 +121,72 @@
       });
     }
 
-    /* ---------- v4: convergence particle field ---------- */
+    /* ---------- v4: the 3D layer (loss-landscape terrain + net fly-through) ---------- */
 
-    var fieldCanvas = document.querySelector("[data-field]");
-    var fieldPromise = (function () {
-      if (!isHome || reduced || !fieldCanvas || !window.FIELD || !window.FIELD.supported) {
+    var sceneCanvas = document.querySelector("[data-scene]");
+    var scenePromise = (function () {
+      if (!isHome || reduced || !sceneCanvas || !window.SCENE || !window.SCENE.supported) {
         return Promise.resolve(false);
       }
-      return window.FIELD.init({ canvas: fieldCanvas }).then(function (ok) {
+      return window.SCENE.init({ canvas: sceneCanvas, dims: { hidden: 128, vocab: 79 } }).then(function (ok) {
         if (!ok) return false;
-        body.classList.add("field-on");
-        fieldCanvas.classList.add("live");
+        body.classList.add("scene-on");
+        sceneCanvas.classList.add("live");
         if (fine) {
           window.addEventListener("pointermove", function (e) {
-            window.FIELD.setPointer(e.clientX, e.clientY, true);
+            window.SCENE.setPointer(e.clientX, e.clientY, true);
           });
           document.documentElement.addEventListener("pointerleave", function () {
-            window.FIELD.setPointer(0, 0, false);
+            window.SCENE.setPointer(0, 0, false);
           });
         }
-        if (lenis) {
-          lenis.on("scroll", function (e) { window.FIELD.setTurbulence(e.velocity || 0); });
+        /* the terrain recedes as the hero scrolls away */
+        var heroEl = document.querySelector(".hero");
+        if (heroEl && typeof ScrollTrigger !== "undefined") {
+          ScrollTrigger.create({
+            trigger: heroEl, start: "top top", end: "bottom 25%", scrub: 0.6,
+            onUpdate: function (self) { window.SCENE.setRecede(self.progress); }
+          });
+        }
+        /* the interlude: pinned fly-through of the network training in this tab */
+        var inter = document.querySelector("[data-interlude]");
+        if (inter && typeof ScrollTrigger !== "undefined") {
+          var iLabels = inter.querySelectorAll("[data-i-step]");
+          ScrollTrigger.create({
+            trigger: inter, start: "top top", end: "+=170%", pin: true, scrub: 1,
+            onUpdate: function (self) {
+              var p = self.progress;
+              window.SCENE.setInterlude(p);
+              iLabels.forEach(function (el, i) {
+                var lo = i / 3, hi = (i + 1) / 3;
+                el.classList.toggle("on", p > lo + 0.04 && p < hi + 0.04);
+              });
+            },
+            onLeave: function () { window.SCENE.setInterlude(0); },
+            onLeaveBack: function () { window.SCENE.setInterlude(0); }
+          });
+        }
+        /* once the trainer knows the real tier dims, rebuild the net to match */
+        if (window.TRAINER) {
+          var applyDims = function () {
+            var st = TRAINER.state();
+            var hidden = st.tier === "A" ? 128 : st.tier === "B" ? 96 : 64;
+            window.SCENE.setDims({ hidden: hidden, vocab: st.vocab });
+            var hEl = document.querySelector("[data-i-hidden]");
+            var vEl = document.querySelector("[data-i-vocab]");
+            if (hEl) hEl.textContent = String(hidden);
+            if (vEl) vEl.textContent = String(st.vocab);
+          };
+          TRAINER.ready() ? applyDims() : TRAINER.on("ready", applyDims);
         }
         window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
-          setTimeout(function () { window.FIELD.refreshColors(); }, 50);
+          setTimeout(function () { window.SCENE.refreshColors(); }, 50);
         });
-        /* scroll choreography: resolve the field target from scroll position.
-           Deterministic (no edge events), morphTo is a no-op when unchanged. */
-        var SHAPE_SECTIONS = [
-          [document.querySelector("#work"), "curve"],
-          [document.querySelector(".skills"), "graph"],
-          [document.querySelector("#contact"), "check"]
-        ].filter(function (p) { return p[0]; });
-        var shapeQueued = false;
-        function resolveShape() {
-          shapeQueued = false;
-          var line = window.innerHeight * 0.55;
-          var target = "name";
-          SHAPE_SECTIONS.forEach(function (p) {
-            if (p[0].getBoundingClientRect().top < line) target = p[1];
-          });
-          window.FIELD.morphTo(target);
-        }
-        function queueShape() {
-          if (shapeQueued) return;
-          shapeQueued = true;
-          requestAnimationFrame(resolveShape);
-        }
-        if (lenis) lenis.on("scroll", queueShape);
-        window.addEventListener("scroll", queueShape, { passive: true });
-        resolveShape();
         var pEl = document.querySelector("[data-ev-particles]");
         if (pEl) {
           setInterval(function () {
-            var st = window.FIELD.stats();
-            pEl.textContent = st.particles.toLocaleString("en-US") + " at " + st.fps + " fps";
+            var st = window.SCENE.stats();
+            pEl.textContent = st.verts.toLocaleString("en-US") + " vertices · " + st.mode;
           }, 1500);
         }
         return true;
@@ -201,15 +212,15 @@
       /* hysteresis: the assembled name never disassembles */
       if (value <= convMax) return;
       convMax = value;
-      if (window.FIELD) window.FIELD.setConverge(value, ms || 500);
+      if (window.SCENE) window.SCENE.setTraining(value);
     }
 
     function endPreloader(instant) {
       if (!pre || pre.classList.contains("done")) return;
       try { sessionStorage.setItem("run", "done"); } catch (e) {}
       if (!realPath) {
-        fieldPromise.then(function (ok) {
-          if (ok) driveConverge(1, 1600);
+        scenePromise.then(function (ok) {
+          if (ok) driveConverge(1);
         });
       }
       if (instant || reduced) {
@@ -231,6 +242,15 @@
       if (reduced || seen) {
         rows.forEach(function (r) { if (!r.hasAttribute("data-sample-row")) r.classList.add("on"); });
         setTimeout(function () { endPreloader(reduced); }, reduced ? 0 : 300);
+        /* repeat view this session: no training theater, but a fresh model
+           still trains quietly so the instruments stay real */
+        if (!reduced && isHome && window.TRAINER) {
+          var seenStart = function () {
+            if (!TRAINER.restored()) { realPath = true; TRAINER.start("background"); }
+            driveConverge(1);
+          };
+          TRAINER.ready() ? seenStart() : TRAINER.on("ready", seenStart);
+        }
         return;
       }
       if (rows.length < 4) {
@@ -265,7 +285,7 @@
               if (barEl) barEl.textContent = "█".repeat(filled) + "░".repeat(CELLS - filled);
               if (lossEl) lossEl.textContent = (2.31 * Math.pow(0.012 / 2.31, state.p)).toFixed(3);
               if (epochEl) epochEl.textContent = String(Math.min(3, 1 + Math.floor(state.p * 3)));
-              if (window.FIELD && state.p * 0.55 > convMax) { convMax = state.p * 0.55; window.FIELD.setConverge(convMax); }
+              if (window.SCENE && state.p * 0.55 > convMax) { convMax = state.p * 0.55; window.SCENE.setTraining(convMax); }
             }
           }, 0.15)
           .call(function () { rows[rows.length - 1].classList.add("on"); }, null, 1.55)
@@ -399,7 +419,7 @@
         gsap.set([role, links], { opacity: 0 });
         var at = 0;
         /* when the particle field renders the name, the DOM h1 stays hidden */
-        if (!body.classList.contains("field-on")) {
+        if (true) { /* the h1 is always crisp DOM type now */
           if (realPath && window.TRAINER && TRAINER.ready()) {
             /* model-driven morph: h1 chars show live samples until they lock */
             bindHeroMorph(typeEls);
@@ -520,20 +540,50 @@
       items.forEach(function (el) { io.observe(el); });
     }
 
-    /* masked line rise on section headings */
+    /* masked line rise on section headings, rotating up out of depth */
     if (!reduced) {
       document.fonts.ready.then(function () {
         document.querySelectorAll("[data-h2]").forEach(function (h) {
           try {
             var sp = new SplitText(h, { type: "lines", mask: "lines" });
             gsap.from(sp.lines, {
-              yPercent: 110, duration: 0.8, ease: "power4.out", stagger: 0.08,
+              yPercent: 110, rotationX: -50, transformPerspective: 700, transformOrigin: "50% 100%",
+              duration: 0.9, ease: "power4.out", stagger: 0.08,
               scrollTrigger: { trigger: h, start: "top 88%", once: true }
             });
           } catch (e) {}
         });
         if (typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
       });
+    }
+
+    /* ---------- depth kit: content enters from depth, reacts to the pointer ---------- */
+
+    if (!reduced && hasGsap) {
+      gsap.utils.toArray(".work-row, .card, .xp-row").forEach(function (el) {
+        gsap.from(el, {
+          rotationX: 9, yPercent: 7, transformPerspective: 900, transformOrigin: "50% 0%",
+          duration: 0.95, ease: "power3.out",
+          scrollTrigger: { trigger: el, start: "top 90%", once: true }
+        });
+      });
+
+      if (fine) {
+        document.querySelectorAll(".card").forEach(function (el) {
+          var rx = gsap.quickTo(el, "rotationX", { duration: 0.5, ease: "power3" });
+          var ry = gsap.quickTo(el, "rotationY", { duration: 0.5, ease: "power3" });
+          var lift = gsap.quickTo(el, "y", { duration: 0.5, ease: "power3" });
+          el.addEventListener("pointermove", function (e) {
+            var r = el.getBoundingClientRect();
+            var nx = (e.clientX - r.left) / r.width;
+            var ny = (e.clientY - r.top) / r.height;
+            rx((0.5 - ny) * 8);
+            ry((nx - 0.5) * 8);
+            lift(-4);
+          });
+          el.addEventListener("pointerleave", function () { rx(0); ry(0); lift(0); });
+        });
+      }
     }
 
     /* ---------- velocity marquee ---------- */
@@ -908,19 +958,19 @@
       dbg.querySelector("[data-ts]").addEventListener("input", function (e) {
         gsap.globalTimeline.timeScale(parseFloat(e.target.value));
       });
-      fieldPromise.then(function (ok) {
+      scenePromise.then(function (ok) {
         if (!ok) return;
         var row = document.createElement("label");
-        row.innerHTML = 'converge <input type="range" min="0" max="1" step="0.01" value="1" data-cv>';
+        row.innerHTML = 'descent <input type="range" min="0" max="1" step="0.01" value="0" data-cv>';
         dbg.appendChild(row);
         row.querySelector("[data-cv]").addEventListener("input", function (e) {
-          window.FIELD.setConverge(parseFloat(e.target.value));
+          window.SCENE.setTraining(parseFloat(e.target.value));
         });
-        var morphs = document.createElement("label");
-        morphs.innerHTML = '<button data-m="name">name</button> <button data-m="curve">curve</button> <button data-m="graph">graph</button> <button data-m="check">check</button>';
-        dbg.appendChild(morphs);
-        morphs.querySelectorAll("[data-m]").forEach(function (b) {
-          b.addEventListener("click", function () { window.FIELD.morphTo(b.getAttribute("data-m")); });
+        var irow = document.createElement("label");
+        irow.innerHTML = 'interlude <input type="range" min="0" max="1" step="0.01" value="0" data-iv>';
+        dbg.appendChild(irow);
+        irow.querySelector("[data-iv]").addEventListener("input", function (e) {
+          window.SCENE.setInterlude(parseFloat(e.target.value));
         });
       });
       if (window.TRAINER) {
