@@ -2011,7 +2011,8 @@ html:not(.js) .tok { visibility: visible; }
   top: 0.5rem;
   bottom: 0.5rem;
   width: 1px;
-  background: var(--hairline);
+  /* a figure axis, not a hairline: it must survive the paper texture */
+  background: color-mix(in srgb, var(--accent) 55%, var(--baseline));
   transform-origin: 50% 0;
 }
 
