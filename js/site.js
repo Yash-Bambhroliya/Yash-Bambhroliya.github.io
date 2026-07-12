@@ -227,6 +227,18 @@
               anchors.push({ a: a, b: b, t: st.t, lookBack: !!st.lookBack });
             });
             anchors.sort(function (x, y) { return x.a - y.a; });
+            /* every leg of travel earns a minimum scroll runway, borrowed
+               from the reading holds, so adjacent sections never force a
+               fifth of the valley into a few hundred pixels of scroll */
+            var minTravel = vh * 0.9;
+            for (var ai = 0; ai < anchors.length - 1; ai++) {
+              var gap = anchors[ai + 1].a - anchors[ai].b;
+              var need = minTravel - gap;
+              if (need > 0) {
+                anchors[ai].b = Math.max(anchors[ai].a + 1, anchors[ai].b - need / 2);
+                anchors[ai + 1].a = Math.min(anchors[ai + 1].b - 1, anchors[ai + 1].a + need / 2);
+              }
+            }
           };
           var ssm = function (v) { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); };
           var journeyAt = function (y) {

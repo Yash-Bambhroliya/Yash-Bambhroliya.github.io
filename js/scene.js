@@ -251,8 +251,8 @@ import * as THREE from "../vendor/three.module.min.js";
 
     /* smooth the driven values */
     S.trainingShown += (S.training - S.trainingShown) * 0.04;
-    S.journeyShown += (S.journey - S.journeyShown) * 0.055;
-    S.lookShown += (S.lookBack - S.lookShown) * 0.05;
+    S.journeyShown += (S.journey - S.journeyShown) * 0.04;
+    S.lookShown += (S.lookBack - S.lookShown) * 0.045;
     S.mouse.sx += (S.mouse.x - S.mouse.sx) * 0.06;
     S.mouse.sy += (S.mouse.y - S.mouse.sy) * 0.06;
 
@@ -303,21 +303,24 @@ import * as THREE from "../vendor/three.module.min.js";
       var ry = S.mouse.on ? S.mouse.sy : 0;
       var j = clamp01(S.journeyShown);
 
-      /* path rig: third person, above and behind the walk position */
+      /* path rig: third person, above and behind the walk position.
+         Short tangent and look-ahead windows keep meanders from whipping
+         the view; the smoothing above does the rest. */
       var cur = pathPos3(j, 0);
-      var ahead = pathPos3(Math.min(1, j + 0.05), 0);
-      var behind = pathPos3(Math.max(0, j - 0.05), 0);
+      var ahead = pathPos3(Math.min(1, j + 0.035), 0);
+      var behind = pathPos3(Math.max(0, j - 0.035), 0);
       var dir = new THREE.Vector3().subVectors(ahead, behind);
       if (dir.lengthSq() < 1e-6) dir.set(1, 0, 0);
       dir.normalize();
       var pathPos = cur.clone().addScaledVector(dir, -14);
       pathPos.y = Math.max(pathPos.y + 10, cur.y + 7.5);
-      var lookAhead = pathPos3(Math.min(1, j + 0.1), 2);
-      var lookBehind = pathPos3(Math.max(0, j - 0.12), 4);
+      var lookAhead = pathPos3(Math.min(1, j + 0.07), 2);
+      var lookBehind = pathPos3(Math.max(0, j - 0.1), 4);
       var pathLook = lookAhead.lerp(lookBehind, clamp01(S.lookShown));
 
-      /* hero vista holds the top of the page, then hands over to the walk */
-      var w = smoothstep(j / 0.12);
+      /* hero vista holds the top of the page, then hands over to the walk
+         across the whole approach to the replay, never in one scroll tick */
+      var w = smoothstep(j / 0.16);
       var pos = new THREE.Vector3(HERO_POS.x, HERO_POS.y, HERO_POS.z).lerp(pathPos, w);
       var lk = HERO_LOOK.clone().lerp(pathLook, w);
       pos.x += rx * (7 - 4.5 * w);
