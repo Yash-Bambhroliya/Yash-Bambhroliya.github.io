@@ -45,6 +45,7 @@
 
   <main id="main">
     <div class="wrap cs-header">
+      <span class="cs-num" aria-hidden="true">02</span>
       <a class="back" href="/#work">← All work</a>
       <p class="kicker">Case study 02</p>
       <h1>Benchmarking an agent memory engine until it stopped guessing</h1>
@@ -62,6 +63,7 @@
       <p>My job was to answer a different question: does it actually work? Engines like this demo well and then fail on the queries that matter. So I built the evaluation and ran it against every version.</p>
 
       <h2>What I measured</h2>
+      <aside class="mnote">20 queries, 78 files, 129K tokens, 8 categories</aside>
       <p>I wrote a 20-query benchmark over a real 78-file, 129K-token workspace, covering 8 categories: personal facts, infrastructure, recent events, PR history, root causes, decisions, multi-hop questions, and negative queries (asking about things that do not exist, where the right answer is "nothing found"). Each query has a predefined expected answer and gets scored correct, partial, or missed.</p>
 
       <figure class="viz" role="group" aria-label="Line chart of benchmark recall accuracy across six engine versions">
@@ -143,10 +145,13 @@
       </div>
 
       <h2>The ablation that surprised me</h2>
+      <aside class="mnote">three embedding models, one identical score: 70%</aside>
       <p>The engine supports real transformer embeddings (bge-small, MiniLM) as a drop-in upgrade over its default feature-hashed sparse vectors. Everyone's instinct, including mine, was that real embeddings would win. They did not. All three scored exactly 70% on the benchmark, and the transformer embeddings cost 30x more import time and 20x more query latency for it. On a corpus like this, retrieval quality was bottlenecked by how memories get split and typed, not by embedding quality.</p>
+      <aside class="mnote">reranking dropped recall from 80% to 40%</aside>
       <p>Cross-encoder reranking was worse than useless: it dropped accuracy from 80% to 40%, because a reranker trained on passages scores single-sentence fact chunks badly. And the version 5 regression in the chart taught the same lesson from another angle: the shipped default concept aliases actively hurt (55% vs 80% with empty concepts). Every "obvious upgrade" needed the benchmark to call it.</p>
 
       <h2>The fix I contributed</h2>
+      <aside class="mnote">the fix: check the evidence covers the subjects asked about</aside>
       <p>At 80%, the remaining failures were confident wrong answers, mostly on negative queries: ask about something that does not exist and the engine would return its closest match anyway. I wrote a subject-coverage confidence check: extract the query's subjects, verify the retrieved evidence actually covers them, and detect does-X-exist style questions so the engine can answer "nothing found" with confidence instead of guessing. That closed the gap from 80% to 85%, which is the measured ceiling for this corpus, since the remaining misses are data gaps rather than retrieval failures.</p>
 
       <h2>Numbers to keep in context</h2>
@@ -157,6 +162,7 @@
       </ul>
 
       <h2>What I took from it</h2>
+      <blockquote>A small benchmark you actually read beats a big one you dashboard.</blockquote>
       <p>Retrieval systems fail quietly, and the failures cluster exactly where demos never look: negative queries, multi-hop questions, stale defaults. A small benchmark you actually read beats a big one you dashboard. And measured negative results, like reranking hurting or embeddings not mattering, saved this project more tokens and latency than any feature added.</p>
     </article>
 
@@ -178,7 +184,7 @@
     <svg viewBox="0 0 96 28">
       <path class="curve" data-loss-curve d="M2 3 C 14 4, 18 12, 28 15 S 46 21, 58 23 S 84 25.5, 94 26"/>
     </svg>
-    <span>epoch <span data-loss-epoch>1</span>/3 · loss <span class="loss-val" data-loss-live>2.310</span></span>
+    <span>reading · <span class="loss-val" data-loss-live>0%</span></span>
   </div>
 
   <div class="term" data-term aria-label="Terminal" role="dialog">

@@ -862,7 +862,7 @@
     /* ---------- depth kit: content enters from depth, reacts to the pointer ---------- */
 
     if (!reduced && hasGsap) {
-      gsap.utils.toArray(".work-row, .card, .xp-row").forEach(function (el) {
+      gsap.utils.toArray(".work-row, .card, .xp-row, .stat").forEach(function (el) {
         gsap.from(el, {
           rotationX: 9, yPercent: 7, transformPerspective: 900, transformOrigin: "50% 0%",
           duration: 0.95, ease: "power3.out",
@@ -921,7 +921,7 @@
       var widgetReal = false;
       var scrollDriver = null;
       if (reduced || !hasGsap) {
-        if (liveLoss) liveLoss.textContent = "0.012";
+        if (liveLoss) liveLoss.textContent = isHome ? "0.012" : "0%";
         if (liveEpoch) liveEpoch.textContent = "3";
       } else {
         var L = curve.getTotalLength();
@@ -934,6 +934,12 @@
             if (widgetReal) return;
             var p = self.progress;
             curve.style.strokeDashoffset = String(L * (1 - p));
+            if (!isHome) {
+              /* case pages carry no model, so the instrument tells the
+                 truth it can: how far through the page you are */
+              if (liveLoss) liveLoss.textContent = Math.round(p * 100) + "%";
+              return;
+            }
             if (liveLoss) liveLoss.textContent = (2.31 * Math.pow(0.012 / 2.31, p)).toFixed(3);
             if (liveEpoch) liveEpoch.textContent = String(Math.min(3, 1 + Math.floor(p * 3)));
           }
@@ -1068,6 +1074,59 @@
           yTo((e.clientY - (r.top + r.height / 2)) * 0.3);
         });
         el.addEventListener("pointerleave", function () { xTo(0); yTo(0); });
+      });
+    }
+
+    /* ---------- case charts draw themselves as you arrive ---------- */
+
+    if (body.getAttribute("data-page") === "case" && !reduced && hasGsap) {
+      document.querySelectorAll(".viz svg, .diagram svg").forEach(function (svg) {
+        var trig = { trigger: svg, start: "top 82%", once: true };
+
+        var bars = svg.querySelectorAll(".series-base, .series-ft");
+        if (bars.length) {
+          gsap.from(bars, {
+            scaleY: 0, transformOrigin: "50% 100%",
+            duration: 0.9, ease: "power3.out", stagger: 0.07,
+            scrollTrigger: trig
+          });
+        }
+
+        svg.querySelectorAll(".line-path, .flow").forEach(function (p, i) {
+          if (!p.getTotalLength) return;
+          var len = p.getTotalLength();
+          p.style.strokeDasharray = len;
+          p.style.strokeDashoffset = len;
+          gsap.to(p, {
+            strokeDashoffset: 0, duration: 1.1, ease: "power2.inOut", delay: 0.15 + i * 0.12,
+            scrollTrigger: trig
+          });
+        });
+
+        var dots = svg.querySelectorAll(".dot");
+        if (dots.length) {
+          gsap.from(dots, {
+            scale: 0, transformOrigin: "50% 50%",
+            duration: 0.5, ease: "back.out(2.2)", stagger: 0.12, delay: 0.25,
+            scrollTrigger: trig
+          });
+        }
+
+        var boxes = svg.querySelectorAll(".box");
+        if (boxes.length) {
+          gsap.from(boxes, {
+            opacity: 0, y: 10, duration: 0.6, ease: "power3.out", stagger: 0.1,
+            scrollTrigger: trig
+          });
+        }
+
+        var labels = svg.querySelectorAll(".direct-label");
+        if (labels.length) {
+          gsap.from(labels, {
+            opacity: 0, y: 6, duration: 0.5, ease: "power3.out", stagger: 0.1, delay: 0.6,
+            scrollTrigger: trig
+          });
+        }
       });
     }
 

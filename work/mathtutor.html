@@ -45,6 +45,7 @@
 
   <main id="main">
     <div class="wrap cs-header">
+      <span class="cs-num" aria-hidden="true">01</span>
       <a class="back" href="/#work">← All work</a>
       <p class="kicker">Case study 01</p>
       <h1>Fine-tuning a math tutor, and catching its judge lying</h1>
@@ -63,16 +64,20 @@
       <p>Base Qwen3-8B is good at math. It is not good at tutoring, and it will happily write Python when a student asks. That gap is what the fine-tune targets.</p>
 
       <h2>Data</h2>
+      <aside class="mnote">612 examples, curated by hand. small on purpose.</aside>
       <p>No suitable dataset existed, so I generated one: seed problems first, then multi-turn tutoring conversations built on them, then an automated cleaning pass. Every response in the final set follows the Goal, Steps, Example, Checkpoint structure. The final training set had 612 curated examples, which is small on purpose. I wanted to know how far careful curation gets you before scale does.</p>
 
       <h2>Two training rounds</h2>
       <p>The first round (LoRA rank 32, 526 examples) looked fine in the loss curves and failed in practice. Out-of-domain refusal improved a lot, but pedagogy got worse than the base model. The tutor structure was there on the surface while the actual teaching quality regressed.</p>
+      <aside class="mnote">rank 16 beat rank 32: better data, smaller adapter</aside>
       <p>For the second round I dropped the rank to 16, grew and re-curated the data to 612 examples, and added NEFTune noise injection. That combination fixed the pedagogy regression while keeping the refusal gains. The lesson that stuck with me: for behavior-shaping fine-tunes, data quality and a smaller adapter beat a bigger adapter on noisier data.</p>
 
       <h2>The evaluation</h2>
+      <aside class="mnote">judge: claude sonnet 4, blind, randomized order</aside>
       <p>I evaluated both the base model and the fine-tune on 50 held-out prompts: 42 math questions across grade levels and 8 out-of-domain traps (coding requests, general chat, homework in other subjects). Claude Sonnet 4 scored each response alone, without seeing the other model's answer, in randomized order, on five criteria from 1 to 5: correctness, pedagogy, structure, faithfulness, and refusal.</p>
 
       <h2>The judge was rewarding the wrong thing</h2>
+      <aside class="mnote">a correct bubble sort is still a tutoring failure</aside>
       <p>Reading the judge's raw JSON, I found scores that made no sense. When a student asked for Python help, the base model wrote a working bubble sort, and the judge gave it correctness 5. The code was correct. But a math tutor writing Python on request is a failure, not a win. The judge was also inconsistent on refusals, scoring the same kind of response as N/A one time and 5 another.</p>
       <p>Averaged over everything, these errors quietly inflated the base model's numbers. I corrected the methodology by scoring each metric only where it applies: correctness and pedagogy on the 42 math prompts, refusal on the 8 out-of-domain prompts, structure and faithfulness on all 50. Both the raw and corrected scores are in the repo, so anyone can check the difference.</p>
 
@@ -151,6 +156,7 @@
         </details>
       </figure>
 
+      <aside class="mnote">refusal +0.98 was the whole point of the tune</aside>
       <p>The fine-tune wins on all five criteria. The two that matter most to me are refusal, up 0.98 on a 5-point scale, because that was the whole point of the tune, and faithfulness, up 0.18, because a tutor that invents math is worse than no tutor. The in-domain gains are small and honest: base Qwen3-8B was already strong at math, and I am not going to pretend 612 examples changed that.</p>
 
       <h2>Limitations I know about</h2>
@@ -162,6 +168,7 @@
       </ul>
 
       <h2>What I took from it</h2>
+      <blockquote>I now assume every eval is wrong until I have read its failures myself.</blockquote>
       <p>The fine-tuning itself was the easy half. The work that changed the outcome was reading raw judge output line by line, noticing the scores that should not exist, and rebuilding the methodology so the metric measures the behavior I actually care about. I now assume every eval is wrong until I have read its failures myself.</p>
     </article>
 
@@ -183,7 +190,7 @@
     <svg viewBox="0 0 96 28">
       <path class="curve" data-loss-curve d="M2 3 C 14 4, 18 12, 28 15 S 46 21, 58 23 S 84 25.5, 94 26"/>
     </svg>
-    <span>epoch <span data-loss-epoch>1</span>/3 · loss <span class="loss-val" data-loss-live>2.310</span></span>
+    <span>reading · <span class="loss-val" data-loss-live>0%</span></span>
   </div>
 
   <div class="term" data-term aria-label="Terminal" role="dialog">

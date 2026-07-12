@@ -813,7 +813,60 @@ footer a { color: var(--ink-2); }
 
 .cs-meta dd { margin: 0; color: var(--ink-2); }
 
-.cs-body { padding-block: 0 clamp(3.5rem, 9vw, 6rem); }
+.cs-body { padding-block: 0 clamp(3.5rem, 9vw, 6rem); position: relative; }
+
+/* the machine annotates the margin while the human writes the column */
+.mnote {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.75;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+
+.mnote::before {
+  content: "";
+  display: block;
+  width: 1.4rem;
+  border-top: 1px solid var(--baseline);
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 75rem) {
+  .mnote {
+    position: absolute;
+    left: calc(var(--pad) + var(--measure) + 3rem);
+    width: 13rem;
+  }
+}
+
+@media (max-width: 74.99rem) {
+  .mnote {
+    border-left: 1px solid var(--hairline);
+    padding-left: 0.9rem;
+    margin: 1.5rem 0;
+    max-width: 26rem;
+  }
+  .mnote::before { display: none; }
+}
+
+/* the case number haunts the header like the work list ghosts */
+.cs-header { position: relative; }
+
+.cs-num {
+  position: absolute;
+  right: var(--pad);
+  top: clamp(2rem, 6vw, 4rem);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(7rem, 17vw, 13rem);
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--hairline);
+  pointer-events: none;
+  user-select: none;
+  z-index: -1;
+}
 
 .cs-next {
   border-top: 1px solid var(--hairline);

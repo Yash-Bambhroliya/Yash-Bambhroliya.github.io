@@ -45,6 +45,7 @@
 
   <main id="main">
     <div class="wrap cs-header">
+      <span class="cs-num" aria-hidden="true">03</span>
       <a class="back" href="/#work">← All work</a>
       <p class="kicker">Case study 03</p>
       <h1>An intelligence agent you can leave alone</h1>
@@ -62,6 +63,7 @@
       <p>The second half is the hard part. An LLM agent that reads the web will confidently report launches that never happened. Most agent demos ignore this. Rhizome Logic is designed around it.</p>
 
       <h2>How it works</h2>
+      <aside class="mnote">three agents: collect, deliver, synthesize</aside>
       <p>Three scheduled agents run on the OpenClaw framework, sharing a file-based memory. One collects, searching each tracked competitor in parallel every day. One delivers, sending a digest to Telegram. One synthesizes weekly, reading across competitors to find patterns no single day shows.</p>
 
       <figure class="diagram" role="group" aria-label="Architecture diagram: collection agent feeds per-competitor memory, a verification gate feeds the verified record, which feeds the daily digest and weekly synthesis">
@@ -115,10 +117,14 @@
       </figure>
 
       <h2>Keeping an agent honest</h2>
+      <blockquote>The agent proposes, I approve.</blockquote>
+      <aside class="mnote">every fact carries a source and a confidence</aside>
       <p>Every fact the collector writes carries a source citation and a confidence score of high, medium, or low. Anything it could not verify gets flagged as unverified rather than silently included. And nothing enters the permanent record until a human has reviewed it. That gate costs me a few minutes a day and is the reason the record stays trustworthy: the agent proposes, I approve.</p>
+      <aside class="mnote">markdown files. no vector database.</aside>
       <p>Memory is plain markdown files per competitor: one file each for pricing, hiring, product, and signals, plus dated snapshots of the raw pages. No vector database, no framework magic. When I want to know why the system believes something, I open the file and read the citation. Boring storage is a feature in a system whose whole job is being believable.</p>
 
       <h2>What it costs</h2>
+      <aside class="mnote">$23 a month, unattended since late 2025</aside>
       <p>About $23 a month in API usage for daily coverage of a market. The scheduled agents do the heavy reading; the human gate keeps the output worth reading. It has run unattended since late 2025, and the weekly synthesis has caught pricing moves and hiring shifts I would have missed on my own.</p>
 
       <h2>What I took from it</h2>
@@ -143,7 +149,7 @@
     <svg viewBox="0 0 96 28">
       <path class="curve" data-loss-curve d="M2 3 C 14 4, 18 12, 28 15 S 46 21, 58 23 S 84 25.5, 94 26"/>
     </svg>
-    <span>epoch <span data-loss-epoch>1</span>/3 · loss <span class="loss-val" data-loss-live>2.310</span></span>
+    <span>reading · <span class="loss-val" data-loss-live>0%</span></span>
   </div>
 
   <div class="term" data-term aria-label="Terminal" role="dialog">
