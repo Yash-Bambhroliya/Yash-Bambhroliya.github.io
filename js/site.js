@@ -148,34 +148,13 @@
             onUpdate: function (self) { window.SCENE.setRecede(self.progress); }
           });
         }
-        /* the interlude: pinned fly-through of the network training in this tab */
-        var inter = document.querySelector("[data-interlude]");
-        if (inter && typeof ScrollTrigger !== "undefined") {
-          var iLabels = inter.querySelectorAll("[data-i-step]");
-          ScrollTrigger.create({
-            trigger: inter, start: "top top", end: "+=170%", pin: true, scrub: 1,
-            onUpdate: function (self) {
-              var p = self.progress;
-              window.SCENE.setInterlude(p);
-              iLabels.forEach(function (el, i) {
-                var lo = i / 3, hi = (i + 1) / 3;
-                el.classList.toggle("on", p > lo + 0.04 && p < hi + 0.04);
-              });
-            },
-            onLeave: function () { window.SCENE.setInterlude(0); },
-            onLeaveBack: function () { window.SCENE.setInterlude(0); }
-          });
-        }
-        /* once the trainer knows the real tier dims, rebuild the net to match */
+        /* the network scene is opt-in now (terminal: model), never a wall
+           between a recruiter and the work */
         if (window.TRAINER) {
           var applyDims = function () {
             var st = TRAINER.state();
             var hidden = st.tier === "A" ? 128 : st.tier === "B" ? 96 : 64;
             window.SCENE.setDims({ hidden: hidden, vocab: st.vocab });
-            var hEl = document.querySelector("[data-i-hidden]");
-            var vEl = document.querySelector("[data-i-vocab]");
-            if (hEl) hEl.textContent = String(hidden);
-            if (vEl) vEl.textContent = String(st.vocab);
           };
           TRAINER.ready() ? applyDims() : TRAINER.on("ready", applyDims);
         }
@@ -305,6 +284,8 @@
         rows[1].firstChild.nodeValue = "training gru ";
         rows[1].classList.add("on");
         rows[2].classList.add("on");
+        var preNote = pre.querySelector("[data-pre-note]");
+        if (preNote) preNote.hidden = false;
         if (sampleRow) { sampleRow.hidden = false; sampleRow.classList.add("on"); }
         if (convergedLabel) convergedLabel.textContent = "name learned · rendering site";
         var t0 = performance.now();
@@ -500,6 +481,17 @@
 
     runPreloader();
 
+    /* the plain-words line under the hero: only when something real runs */
+    (function () {
+      var note = document.querySelector("[data-live-note]");
+      if (!note || !window.TRAINER) return;
+      var showNote = function () {
+        if (!TRAINER.eligible()) return;
+        setTimeout(function () { note.hidden = false; }, 2500);
+      };
+      TRAINER.ready() ? showNote() : TRAINER.on("ready", showNote);
+    })();
+
     /* ---------- logprob tooltips ---------- */
 
     var lps = document.querySelectorAll(".lp");
@@ -649,7 +641,7 @@
             curve.style.strokeDashoffset = "0";
           }
           var lossTxt = d.emaLoss === null ? "warming" : d.emaLoss.toFixed(3);
-          lossLabel.innerHTML = (d.phase === "warmup" ? "headline" : "corpus") +
+          lossLabel.innerHTML = (d.phase === "warmup" ? "learning my name" : "learning on your device") +
             ' · step ' + d.step + ' · loss <span class="loss-val">' + lossTxt + "</span>";
           if (d.lossHistory && d.lossHistory.length > 1) {
             var hist = d.lossHistory;
@@ -779,7 +771,26 @@
 
       var CMDS = {
         help: function () {
-          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>model</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+        },
+        model: function () {
+          if (!window.SCENE || !document.body.classList.contains("scene-on")) {
+            termPrint("the 3D layer is off on this visit, nothing to fly through");
+            return;
+          }
+          var st = window.TRAINER && TRAINER.ready() ? TRAINER.state() : null;
+          var hidden = st ? (st.tier === "A" ? 128 : st.tier === "B" ? 96 : 64) : 128;
+          termPrint("flying through the network on this page: characters in, " + hidden + " recurrent units, " + (st ? st.vocab : 79) + " characters out", "t-accent");
+          closeTerm();
+          var flight = { p: 0 };
+          gsap.to(flight, {
+            p: 1, duration: 9, ease: "power1.inOut",
+            onUpdate: function () {
+              var v = flight.p < 0.85 ? flight.p / 0.85 : 1 - (flight.p - 0.85) / 0.15;
+              window.SCENE.setInterlude(Math.max(0, Math.min(1, v)) * 0.999);
+            },
+            onComplete: function () { window.SCENE.setInterlude(0); }
+          });
         },
         fit: function (rest) {
           var panel = document.querySelector("[data-jd-panel]");
