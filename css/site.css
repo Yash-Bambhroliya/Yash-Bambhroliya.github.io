@@ -379,9 +379,10 @@ h1, h2, h3 {
   font-size: clamp(2.7rem, 10.4vw, 9.7rem);
   font-weight: 700;
   letter-spacing: -0.045em;
-  line-height: 0.94;
+  line-height: 0.92;
   text-transform: uppercase;
   white-space: nowrap;
+  margin-left: -0.045em; /* optical: the Y overhangs the margin like print */
 }
 
 .hero h1 .line { display: block; overflow: hidden; }
@@ -1561,6 +1562,70 @@ html:not(.js) .tok { visibility: visible; }
   .learn-name { font-size: clamp(1.6rem, 5.5vw, 3rem); }
 }
 
+/* ---------- the instrument bezel: the site is one device ---------- */
+
+.bezel {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  border: 1px solid color-mix(in srgb, var(--ink-3) 22%, transparent);
+}
+
+.bz-c {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 0 solid color-mix(in srgb, var(--ink-3) 55%, transparent);
+}
+
+.bz-tl { top: 9px; left: 9px; border-top-width: 1px; border-left-width: 1px; }
+.bz-tr { top: 9px; right: 9px; border-top-width: 1px; border-right-width: 1px; }
+.bz-bl { bottom: 9px; left: 9px; border-bottom-width: 1px; border-left-width: 1px; }
+.bz-br { bottom: 9px; right: 9px; border-bottom-width: 1px; border-right-width: 1px; }
+
+.bz-alt {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+  .bezel { display: none; }
+}
+
+/* ---------- hero spec plate ---------- */
+
+.hero-meta {
+  position: absolute;
+  top: clamp(4rem, 10vh, 6.5rem);
+  right: var(--pad);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.9;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1100px) {
+  .hero-meta { display: none; }
+}
+
 /* ---------- interview tab + shared report link ---------- */
 
 .jd-tabs {
@@ -1726,6 +1791,7 @@ html:not(.js) .tok { visibility: visible; }
 /* ---------- print ---------- */
 
 @media print {
-  .nav, .theme-toggle, .cs-next, footer, .loss-widget, .term, .preloader, .ticker { display: none; }
+  .nav, .theme-toggle, .cs-next, footer, .loss-widget, .term, .preloader, .ticker,
+  .bezel, .hero-meta, .shared-banner, .halo { display: none; }
   body { background: #fff; color: #000; }
 }

@@ -121,6 +121,64 @@
       });
     }
 
+    /* ---------- altitude: the world warms as you descend ----------
+       The journey value drives color temperature through dusk: cold blue at
+       the rim, violet and rose on the slope, amber at the basin. Applied to
+       the accent family only, in oklch, per theme, with a scroll throttle. */
+
+    var ALT = (function () {
+      var last = -1;
+      var shownJ = 0;
+      var okl = typeof CSS !== "undefined" && CSS.supports && CSS.supports("color", "oklch(0.7 0.1 200)");
+      var bezelAlt = document.querySelector("[data-bezel-alt]");
+      var heroAlt = document.querySelector("[data-hm-alt]");
+
+      /* dusk path: hue climbs through magenta so blue arrives at amber */
+      var ENDS = {
+        dark: { cold: [0.72, 0.13, 250], warm: [0.79, 0.12, 425] },
+        light: { cold: [0.52, 0.14, 255], warm: [0.57, 0.12, 420] }
+      };
+
+      function stageWord(j) {
+        if (j < 0.04) return "the rim";
+        if (j > 0.96) return "the minimum";
+        return "descending";
+      }
+
+      function apply(j) {
+        var w = j * j * (3 - 2 * j);
+        if (okl) {
+          var m = (root.getAttribute("data-theme") || "dark") === "light" ? ENDS.light : ENDS.dark;
+          var L = m.cold[0] + (m.warm[0] - m.cold[0]) * w;
+          var C = m.cold[1] + (m.warm[1] - m.cold[1]) * w;
+          var H = m.cold[2] + (m.warm[2] - m.cold[2]) * w;
+          var st = root.style;
+          st.setProperty("--accent", "oklch(" + L.toFixed(3) + " " + C.toFixed(3) + " " + H.toFixed(1) + ")");
+          st.setProperty("--accent-deep", "oklch(" + Math.min(0.92, L + 0.08).toFixed(3) + " " + Math.max(0.05, C - 0.02).toFixed(3) + " " + H.toFixed(1) + ")");
+          st.setProperty("--glow", "oklch(" + L.toFixed(3) + " " + C.toFixed(3) + " " + H.toFixed(1) + " / 0.35)");
+          st.setProperty("--accent-wash", "oklch(" + L.toFixed(3) + " " + C.toFixed(3) + " " + H.toFixed(1) + " / 0.1)");
+          if (window.SCENE && window.SCENE.supported) window.SCENE.refreshColors();
+        }
+        var altTxt = (1 - j).toFixed(2);
+        if (bezelAlt) { bezelAlt.hidden = false; bezelAlt.textContent = "alt " + altTxt + " · " + stageWord(j); }
+        if (heroAlt) heroAlt.textContent = "alt " + altTxt;
+      }
+
+      return {
+        set: function (j) {
+          shownJ = j;
+          if (Math.abs(j - last) < 0.012 && j !== 0 && j !== 1) return;
+          last = j;
+          apply(j);
+        },
+        refresh: function () { last = -1; this.set(shownJ); }
+      };
+    })();
+
+    /* theme flips re-derive the altitude colors for the new palette */
+    new MutationObserver(function () { ALT.refresh(); })
+      .observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+
     /* ---------- v4: the 3D layer (loss-landscape terrain + net fly-through) ---------- */
 
     var sceneCanvas = document.querySelector("[data-scene]");
@@ -199,10 +257,12 @@
             onUpdate: function () {
               var r = journeyAt(window.scrollY);
               window.SCENE.setJourney(r.j, r.lb);
+              ALT.set(r.j);
             }
           });
           var r0 = journeyAt(window.scrollY);
           window.SCENE.setJourney(r0.j, r0.lb);
+          ALT.set(r0.j);
         }
         /* the network scene is opt-in now (terminal: model), never a wall
            between a recruiter and the work */
@@ -554,6 +614,18 @@
     }
 
     runPreloader();
+
+    /* the hero spec plate: real model identity once the trainer reports in */
+    (function () {
+      var hm = document.querySelector("[data-hm-model]");
+      if (!hm || !window.TRAINER) return;
+      var fill = function () {
+        if (!TRAINER.eligible()) { hm.textContent = "model off this visit"; return; }
+        var st = TRAINER.state();
+        hm.textContent = "tier " + st.tier + " · gru-" + Math.round(st.params / 1000) + "k · " + st.vocab + " chars";
+      };
+      TRAINER.ready() ? fill() : TRAINER.on("decided", fill);
+    })();
 
     /* the plain-words line under the hero: only when something real runs */
     (function () {
