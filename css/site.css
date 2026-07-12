@@ -2016,10 +2016,7 @@ html:not(.js) .tok { visibility: visible; }
   transform-origin: 50% 0;
 }
 
-@supports selector(:has(a)) {
-  .xp::before { transform: scaleY(0); transition: transform 1.1s var(--ease-out) 0.1s; }
-  .xp:has(.reveal.in)::before { transform: scaleY(1); }
-}
+.xp::before { transform: scaleY(var(--axis, 1)); }
 
 .xp-row { position: relative; padding-block: 1.9rem; border-bottom: 0; }
 
@@ -2184,6 +2181,7 @@ body[data-page="case"] .viz-title::before {
 
 @media (max-width: 760px) {
   .work-row { grid-template-columns: 1fr; padding-block: 2rem; }
+  .work-row:nth-child(even) { grid-template-columns: 1fr; }
   .work-row .num { font-size: 2.6rem; -webkit-text-stroke-width: 1px; }
   .work-row:nth-child(even) .num { grid-column: 1; text-align: left; }
   .work-row:nth-child(even) > span:not(.num):not(.meta):not(.ghost) { grid-column: 1; }

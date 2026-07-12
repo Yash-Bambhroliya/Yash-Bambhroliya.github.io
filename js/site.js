@@ -1165,6 +1165,24 @@
       }
     }
 
+    /* ---------- the experience axis grows with the reader ---------- */
+
+    (function () {
+      var xpEl = document.querySelector(".xp");
+      if (!xpEl) return;
+      if (reduced || !hasGsap || typeof ScrollTrigger === "undefined") {
+        xpEl.style.setProperty("--axis", "1");
+        return;
+      }
+      xpEl.style.setProperty("--axis", "0");
+      ScrollTrigger.create({
+        trigger: xpEl, start: "top 78%", end: "bottom 72%", scrub: 0.4,
+        onUpdate: function (self) {
+          xpEl.style.setProperty("--axis", self.progress.toFixed(4));
+        }
+      });
+    })();
+
     /* ---------- velocity marquee ---------- */
 
     var track = document.querySelector("[data-marquee]");
