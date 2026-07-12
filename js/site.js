@@ -455,7 +455,7 @@
             var p = d.phase === "warmup" ? Math.min(1, (d.headlineAcc || 0) / 0.92) : 1;
             var filled = Math.round(p * CELLS);
             if (barEl) barEl.textContent = "█".repeat(filled) + "░".repeat(CELLS - filled);
-            if (lossEl) lossEl.textContent = d.emaLoss === null ? "warming" : d.emaLoss.toFixed(3);
+            if (lossEl) lossEl.textContent = d.emaLoss === null ? "measuring" : d.emaLoss.toFixed(3);
             if (epochEl) epochEl.textContent = String(d.epoch);
             if (sampleEl && d.headlineSample) renderMorphInto(sampleEl, d.headlineSample);
           }
@@ -685,7 +685,7 @@
       function renderSnap(s) {
         el.step.textContent = "step " + s.step.toLocaleString("en-US");
         el.clock.textContent = (s.ms / 1000).toFixed(1) + "s of cpu";
-        el.loss.textContent = s.loss === null ? "loss warming" : (s.phase === "warmup" ? "name loss " : "loss ") + s.loss.toFixed(3);
+        el.loss.textContent = s.loss === null ? "measuring loss" : (s.phase === "warmup" ? "name loss " : "loss ") + s.loss.toFixed(3);
         var txt = (s.sample || "").replace(/\s+/g, " ");
         /* the seed is a fixed prompt, shown dim; everything after it is output */
         el.sample.innerHTML = (s.seed ? '<span class="learn-seed">' + esc(s.seed) + "</span>" : "") + esc(s.seed ? txt.replace(/^\s+/, "") : txt.trim());
@@ -953,7 +953,7 @@
           curve.style.strokeDashoffset = "0";
           var last = h[h.length - 1];
           lossLabel.innerHTML = "trained on your device · step " + last.step +
-            ' · loss <span class="loss-val">' + (last.loss === null ? "warming" : last.loss.toFixed(3)) + "</span>";
+            ' · loss <span class="loss-val">' + (last.loss === null ? "measuring" : last.loss.toFixed(3)) + "</span>";
           var pts = h.filter(function (s) { return s.loss !== null; });
           if (pts.length > 1) {
             var mx = 0.001;
@@ -980,7 +980,7 @@
             curve.style.strokeDasharray = "none";
             curve.style.strokeDashoffset = "0";
           }
-          var lossTxt = d.emaLoss === null ? "warming" : d.emaLoss.toFixed(3);
+          var lossTxt = d.emaLoss === null ? "measuring" : d.emaLoss.toFixed(3);
           lossLabel.innerHTML = (d.phase === "warmup" ? "learning my name" : "learning on your device") +
             ' · step ' + d.step + ' · loss <span class="loss-val">' + lossTxt + "</span>";
           if (d.lossHistory && d.lossHistory.length > 1) {
@@ -1205,7 +1205,7 @@
           else if (sub === "more") { TRAINER.resume(); TRAINER.setMode("background"); termPrint("training resumed", "t-good"); }
           else {
             var st = TRAINER.stats();
-            termPrint("tier " + st.tier + " · " + st.params.toLocaleString("en-US") + " params · step " + st.step + " · " + st.tokensSeen.toLocaleString("en-US") + " tokens · " + (st.loss ? "corpus loss " + st.loss.toFixed(3) : "warming") + " · " + Math.round(st.trainedMs / 1000) + "s on your CPU" + (st.restored ? " (restored from a previous visit)" : ""));
+            termPrint("tier " + st.tier + " · " + st.params.toLocaleString("en-US") + " params · step " + st.step + " · " + st.tokensSeen.toLocaleString("en-US") + " tokens · " + (st.loss ? "corpus loss " + st.loss.toFixed(3) : "measuring loss") + " · " + Math.round(st.trainedMs / 1000) + "s on your CPU" + (st.restored ? " (restored from a previous visit)" : ""));
           }
         },
         about: function () {
