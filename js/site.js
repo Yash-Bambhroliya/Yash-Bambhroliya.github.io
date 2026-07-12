@@ -826,6 +826,173 @@
       }
     })();
 
+    /* ---------- the unbroken thread ----------
+       One line runs the whole page: born at the hero caret, down the margin
+       lane, underlining each section heading as it passes, alongside the
+       replay and the work, ending under the email address in the basin. Its
+       tip tracks your reading position; its stroke carries the dusk gradient
+       from cold at the rim to amber at the bottom. Desktop fine-pointer only. */
+
+    (function () {
+      if (!isHome || reduced || !hasGsap || typeof ScrollTrigger === "undefined") return;
+      if (!window.matchMedia("(min-width: 900px) and (pointer: fine)").matches) return;
+      var main = document.querySelector("main");
+      var caret = document.querySelector(".hero .caret");
+      if (!main || !caret) return;
+
+      var NS = "http://www.w3.org/2000/svg";
+      var svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("class", "thread");
+      svg.setAttribute("aria-hidden", "true");
+      var defs = document.createElementNS(NS, "defs");
+      var grad = document.createElementNS(NS, "linearGradient");
+      grad.setAttribute("id", "threadGrad");
+      grad.setAttribute("gradientUnits", "userSpaceOnUse");
+      grad.setAttribute("x1", "0"); grad.setAttribute("y1", "0");
+      grad.setAttribute("x2", "0");
+      defs.appendChild(grad);
+      svg.appendChild(defs);
+      var path = document.createElementNS(NS, "path");
+      path.setAttribute("class", "thread-path");
+      svg.appendChild(path);
+      var tip = document.createElementNS(NS, "circle");
+      tip.setAttribute("class", "thread-tip");
+      tip.setAttribute("r", "3");
+      svg.appendChild(tip);
+      main.insertBefore(svg, main.firstChild);
+
+      /* dusk endpoints per theme, matching the altitude system */
+      function paintGradient(docH) {
+        grad.setAttribute("y2", String(docH));
+        var light = (root.getAttribute("data-theme") || "dark") === "light";
+        var stops = light
+          ? ["oklch(0.52 0.14 255)", "oklch(0.55 0.13 340)", "oklch(0.57 0.12 60)"]
+          : ["oklch(0.72 0.13 250)", "oklch(0.755 0.125 340)", "oklch(0.79 0.12 65)"];
+        grad.innerHTML = "";
+        stops.forEach(function (c, i) {
+          var s = document.createElementNS(NS, "stop");
+          s.setAttribute("offset", String(i * 50) + "%");
+          s.setAttribute("stop-color", c);
+          grad.appendChild(s);
+        });
+      }
+
+      function docPoint(el, dx, dy, edge) {
+        var r = el.getBoundingClientRect();
+        var x = edge === "right" ? r.right : r.left;
+        return { x: x + (dx || 0), y: r.top + window.scrollY + (dy || 0) + (edge === "bottom" || edge === "right" ? r.height : 0) };
+      }
+
+      var totalLen = 0, lenTable = [];
+
+      function build() {
+        var wrapR = document.querySelector(".hero.wrap").getBoundingClientRect();
+        var laneX = Math.max(22, wrapR.left * 0.55);
+        var sy = window.scrollY;
+        var pts = [];
+
+        /* born at the caret */
+        var cr = caret.getBoundingClientRect();
+        pts.push({ x: cr.left + cr.width / 2, y: cr.bottom + sy + 6 });
+
+        /* sweep left into the margin lane */
+        var lead = document.querySelector(".hero .lead");
+        if (lead) {
+          var lr = lead.getBoundingClientRect();
+          pts.push({ x: lr.left - 34, y: lr.top + sy + lr.height * 0.4 });
+        }
+        pts.push({ x: laneX, y: pts[pts.length - 1].y + 260 });
+
+        /* straight past the pinned replay */
+        var spacer = document.querySelector(".pin-spacer");
+        var learnEl = document.querySelector("[data-learn]");
+        var beside = spacer || learnEl;
+        if (beside) {
+          var br = beside.getBoundingClientRect();
+          pts.push({ x: laneX, y: br.top + sy + 60 });
+          pts.push({ x: laneX, y: br.bottom + sy - 60 });
+        }
+
+        /* underline each section heading on the way down */
+        ["#work", "#experience", ".skills", "#contact"].forEach(function (sel) {
+          var h = document.querySelector(sel + " h2, " + sel + " [data-h2]");
+          if (!h) return;
+          var hr = h.getBoundingClientRect();
+          var y = hr.bottom + sy + 12;
+          var runEnd = hr.left + Math.min(hr.width, 320);
+          pts.push({ x: laneX, y: y - 130 });
+          pts.push({ x: hr.left - 4, y: y });
+          pts.push({ x: runEnd, y: y });
+          pts.push({ x: hr.left - 4, y: y + 8 });
+          pts.push({ x: laneX, y: y + 150 });
+        });
+
+        /* terminate under the email address */
+        var email = document.querySelector(".contact .email");
+        if (email) {
+          var er = email.getBoundingClientRect();
+          var ey = er.bottom + sy + 8;
+          pts.push({ x: laneX, y: ey - 90 });
+          pts.push({ x: er.left, y: ey });
+          pts.push({ x: er.left + er.width, y: ey });
+        }
+
+        /* smooth polyline: quadratic through midpoints */
+        var d = "M" + pts[0].x.toFixed(1) + " " + pts[0].y.toFixed(1);
+        for (var i = 1; i < pts.length - 1; i++) {
+          var mx = (pts[i].x + pts[i + 1].x) / 2;
+          var my = (pts[i].y + pts[i + 1].y) / 2;
+          d += " Q" + pts[i].x.toFixed(1) + " " + pts[i].y.toFixed(1) + " " + mx.toFixed(1) + " " + my.toFixed(1);
+        }
+        var last = pts[pts.length - 1];
+        d += " L" + last.x.toFixed(1) + " " + last.y.toFixed(1);
+        path.setAttribute("d", d);
+
+        var docH = document.documentElement.scrollHeight;
+        svg.setAttribute("width", String(document.documentElement.clientWidth));
+        svg.setAttribute("height", String(docH));
+        svg.setAttribute("viewBox", "0 0 " + document.documentElement.clientWidth + " " + docH);
+        paintGradient(docH);
+
+        totalLen = path.getTotalLength();
+        path.style.strokeDasharray = String(totalLen);
+        /* length lookup: document y to distance along the path */
+        lenTable = [];
+        var SAMPLES = 260;
+        for (i = 0; i <= SAMPLES; i++) {
+          var l = (i / SAMPLES) * totalLen;
+          lenTable.push({ l: l, y: path.getPointAtLength(l).y });
+        }
+      }
+
+      function lenAtY(y) {
+        var best = 0;
+        for (var i = 0; i < lenTable.length; i++) {
+          if (lenTable[i].y <= y) best = Math.max(best, lenTable[i].l);
+        }
+        return best;
+      }
+
+      var shown = 0;
+      function update() {
+        if (!totalLen) return;
+        var target = lenAtY(window.scrollY + window.innerHeight * 0.62);
+        shown += (target - shown) * 0.14;
+        if (Math.abs(target - shown) < 0.5) shown = target;
+        path.style.strokeDashoffset = String(Math.max(0, totalLen - shown));
+        var p = path.getPointAtLength(Math.min(totalLen, Math.max(0.1, shown)));
+        tip.setAttribute("cx", p.x.toFixed(1));
+        tip.setAttribute("cy", p.y.toFixed(1));
+      }
+
+      build();
+      update();
+      ScrollTrigger.addEventListener("refresh", function () { build(); update(); });
+      new MutationObserver(function () { paintGradient(document.documentElement.scrollHeight); })
+        .observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+      gsap.ticker.add(update);
+    })();
+
     /* ---------- logprob tooltips ---------- */
 
     var lps = document.querySelectorAll(".lp");

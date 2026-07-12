@@ -1620,6 +1620,33 @@ html:not(.js) .tok { visibility: visible; }
   .learn-name { font-size: clamp(1.6rem, 5.5vw, 3rem); }
 }
 
+/* ---------- the unbroken thread ---------- */
+
+.thread {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.thread-path {
+  fill: none;
+  stroke: url(#threadGrad);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.thread-tip {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 7px var(--glow));
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+  .thread { display: none; }
+}
+
 /* ---------- the instrument bezel: the site is one device ---------- */
 
 .bezel {
