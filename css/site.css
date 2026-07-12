@@ -911,6 +911,10 @@ main, footer { position: relative; z-index: 2; }
 .preloader-log .bar { letter-spacing: 0.05em; }
 .preloader-log .val { color: var(--ink); font-weight: 600; }
 
+.preloader-log .sample-row .sample { letter-spacing: 0.04em; }
+.tok-miss { color: var(--ink-3); opacity: 0.55; }
+.tok-lock { color: var(--ink); }
+
 .preloader .skip {
   position: absolute;
   bottom: 1.5rem;

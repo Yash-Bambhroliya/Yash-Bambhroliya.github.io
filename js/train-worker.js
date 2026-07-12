@@ -418,6 +418,7 @@ function trainLoop() {
     RUN.lastAcc = hl.acc;
   }
   if (RUN.step % 5 === 0) msg.sample = sampleText(M.model, 90, RUN.temp);
+  if (RUN.step % 10 === 0 && RUN.lossHistory.length > 1) msg.lossHistory = RUN.lossHistory.slice(-120);
   postMessage(msg);
 
   /* the preloader UI exits on its own clock; the worker only stops itself

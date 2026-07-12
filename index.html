@@ -41,7 +41,8 @@
       <div class="row"><span class="prompt">$</span> yash --init</div>
       <div class="row">loading weights <span class="bar" data-bar>░░░░░░░░░░░░░░░░░░░░░░░░</span></div>
       <div class="row">epoch <span class="val" data-epoch>1</span>/3 · loss <span class="val" data-loss>2.310</span></div>
-      <div class="row"><span class="ok">✓</span> converged · rendering site</div>
+      <div class="row sample-row" data-sample-row hidden>sample: <span class="sample" data-sample></span></div>
+      <div class="row"><span class="ok">✓</span> <span data-converged-label>converged · rendering site</span></div>
     </div>
     <button class="skip" type="button" data-skip>skip</button>
   </div>
@@ -245,6 +246,7 @@
         <div>your LCP, measured now<span class="ev" data-ev-lcp>measuring</span></div>
         <div>requests<span class="ev" data-ev-req>measuring</span></div>
         <div>frameworks<span class="ev">0</span></div>
+        <div>model trained in your tab<span class="ev" data-ev-model>not this visit</span></div>
         <div>particles<span class="ev" data-ev-particles>0</span></div>
       </div>
       <div class="foot-inner">
@@ -259,7 +261,7 @@
     <svg viewBox="0 0 96 28">
       <path class="curve" data-loss-curve d="M2 3 C 14 4, 18 12, 28 15 S 46 21, 58 23 S 84 25.5, 94 26"/>
     </svg>
-    <span>epoch <span data-loss-epoch>1</span>/3 · loss <span class="loss-val" data-loss-live>2.310</span></span>
+    <span data-loss-label>epoch <span data-loss-epoch>1</span>/3 · loss <span class="loss-val" data-loss-live>2.310</span></span>
   </div>
 
   <div class="term" data-term aria-label="Terminal" role="dialog">
@@ -276,6 +278,7 @@
   <script src="/vendor/SplitText.min.js" defer></script>
   <script src="/vendor/ScrambleTextPlugin.min.js" defer></script>
   <script src="/vendor/lenis.min.js" defer></script>
+  <script src="/js/trainer.js" defer></script>
   <script src="/js/site.js" defer></script>
 </body>
 </html>

@@ -68,8 +68,14 @@
       if (tempVal) tempVal.textContent = v;
       if (hasGsap) gsap.globalTimeline.timeScale(v === "1.0" ? 1.2 : 1);
       if (v === "0.0") revealAll();
+      /* the slider is real: it sets the sampling temperature of the model
+         training in this tab */
+      if (window.TRAINER && TRAINER.ready()) {
+        TRAINER.setTemp(parseFloat(v));
+        if (v === "0.0") TRAINER.stop();
+      }
       if (announce && termPrint) {
-        termPrint("temperature set to " + v + (v === "0.0" ? " (calm: motion off on next load)" : v === "1.0" ? " (spicy)" : " (default)"), "t-good");
+        termPrint("temperature set to " + v + (v === "0.0" ? " (calm: motion off, training stopped)" : v === "1.0" ? " (spicy)" : " (default)"), "t-good");
       }
     }
     if (tempVal) tempVal.textContent = body.getAttribute("data-temp") || "0.7";
@@ -175,18 +181,36 @@
       });
     })();
 
+    /* ---------- boot the in-tab trainer (decides its own eligibility) ---------- */
+
+    if (isHome && window.TRAINER) TRAINER.boot();
+
     /* ---------- preloader: training run ---------- */
 
     var pre = document.querySelector(".preloader");
     var seen = false;
     try { seen = sessionStorage.getItem("run") === "done"; } catch (e) {}
 
+    /* one decision per page load: this session's telemetry is either fully
+       real (worker training) or fully the v3 canned sequence. Never mixed. */
+    var realPath = false;
+    var convMax = 0;
+
+    function driveConverge(value, ms) {
+      /* hysteresis: the assembled name never disassembles */
+      if (value <= convMax) return;
+      convMax = value;
+      if (window.FIELD) window.FIELD.setConverge(value, ms || 500);
+    }
+
     function endPreloader(instant) {
       if (!pre || pre.classList.contains("done")) return;
       try { sessionStorage.setItem("run", "done"); } catch (e) {}
-      fieldPromise.then(function (ok) {
-        if (ok) window.FIELD.setConverge(1, 1600);
-      });
+      if (!realPath) {
+        fieldPromise.then(function (ok) {
+          if (ok) driveConverge(1, 1600);
+        });
+      }
       if (instant || reduced) {
         pre.classList.add("done");
         heroIntro();
@@ -202,9 +226,9 @@
     function runPreloader() {
       if (!pre) return heroIntro();
       var rows = pre.querySelectorAll(".row");
-      setTimeout(function () { endPreloader(true); }, 5000);
+      setTimeout(function () { endPreloader(true); }, 12000);
       if (reduced || seen) {
-        rows.forEach(function (r) { r.classList.add("on"); });
+        rows.forEach(function (r) { if (!r.hasAttribute("data-sample-row")) r.classList.add("on"); });
         setTimeout(function () { endPreloader(reduced); }, reduced ? 0 : 300);
         return;
       }
@@ -214,33 +238,144 @@
         setTimeout(function () { endPreloader(false); }, 800);
         return;
       }
+
       var barEl = pre.querySelector("[data-bar]");
       var lossEl = pre.querySelector("[data-loss]");
       var epochEl = pre.querySelector("[data-epoch]");
+      var sampleRow = pre.querySelector("[data-sample-row]");
+      var sampleEl = pre.querySelector("[data-sample]");
+      var convergedLabel = pre.querySelector("[data-converged-label]");
       var CELLS = 24;
-      var state = { p: 0 };
-      var tl = gsap.timeline();
-      tl.call(function () { rows[0].classList.add("on"); })
-        .call(function () { rows[1].classList.add("on"); rows[2].classList.add("on"); }, null, 0.3)
-        .to(state, {
-          p: 1, duration: 1.25, ease: "power2.inOut",
-          onUpdate: function () {
-            var filled = Math.round(state.p * CELLS);
-            if (barEl) barEl.textContent = "█".repeat(filled) + "░".repeat(CELLS - filled);
-            if (lossEl) lossEl.textContent = (2.31 * Math.pow(0.012 / 2.31, state.p)).toFixed(3);
-            if (epochEl) epochEl.textContent = String(Math.min(3, 1 + Math.floor(state.p * 3)));
-            if (window.FIELD) window.FIELD.setConverge(state.p * 0.55);
+      var chosen = false;
+      var tl = null;
+
+      rows[0].classList.add("on");
+
+      function goFake() {
+        if (chosen) return;
+        chosen = true;
+        var state = { p: 0 };
+        tl = gsap.timeline();
+        tl.call(function () { rows[1].classList.add("on"); rows[2].classList.add("on"); }, null, 0.1)
+          .to(state, {
+            p: 1, duration: 1.25, ease: "power2.inOut",
+            onUpdate: function () {
+              var filled = Math.round(state.p * CELLS);
+              if (barEl) barEl.textContent = "█".repeat(filled) + "░".repeat(CELLS - filled);
+              if (lossEl) lossEl.textContent = (2.31 * Math.pow(0.012 / 2.31, state.p)).toFixed(3);
+              if (epochEl) epochEl.textContent = String(Math.min(3, 1 + Math.floor(state.p * 3)));
+              if (window.FIELD && state.p * 0.55 > convMax) { convMax = state.p * 0.55; window.FIELD.setConverge(convMax); }
+            }
+          }, 0.15)
+          .call(function () { rows[rows.length - 1].classList.add("on"); }, null, 1.55)
+          .call(function () { endPreloader(false); }, null, 1.95);
+      }
+
+      function startWhenReady(mode) {
+        if (TRAINER.ready()) { TRAINER.start(mode); return; }
+        var off = TRAINER.on("ready", function () { off(); TRAINER.start(mode); });
+      }
+
+      function goReal() {
+        if (chosen) return;
+        chosen = true;
+        realPath = true;
+        var capMs = 9000;
+        rows[1].firstChild.nodeValue = "training gru ";
+        rows[1].classList.add("on");
+        rows[2].classList.add("on");
+        if (sampleRow) { sampleRow.hidden = false; sampleRow.classList.add("on"); }
+        if (convergedLabel) convergedLabel.textContent = "name learned · rendering site";
+        var t0 = performance.now();
+        var exited = false;
+        var lockedAt = 0;
+        var labeled = false;
+
+        function maybeExit(acc) {
+          if (exited) return;
+          var elapsed = performance.now() - t0;
+          if (acc >= 0.85 && !lockedAt) lockedAt = elapsed;
+          if ((lockedAt && elapsed - lockedAt > 500) || elapsed > capMs) {
+            exited = true;
+            rows[rows.length - 1].classList.add("on");
+            /* fresh models keep learning in the background; a restored
+               checkpoint has done its time (resume with: train more) */
+            TRAINER.restored() ? TRAINER.stop() : TRAINER.setMode("background");
+            setTimeout(function () { endPreloader(false); }, 350);
           }
-        }, 0.35)
-        .call(function () { rows[3].classList.add("on"); }, null, 1.75)
-        .call(function () { endPreloader(false); }, null, 2.15);
+        }
+
+        TRAINER.on("step", function (d) {
+          if (!labeled) {
+            labeled = true;
+            capMs = TRAINER.state().tier === "C" ? 7000 : 9000;
+            rows[1].firstChild.nodeValue = (TRAINER.restored() ? "resuming checkpoint gru-" : "training gru-") + Math.round(TRAINER.state().params / 1000) + "k ";
+          }
+          /* preloader telemetry (keeps running post-reveal for widget/footer) */
+          if (!exited) {
+            var p = d.phase === "warmup" ? Math.min(1, (d.headlineAcc || 0) / 0.92) : 1;
+            var filled = Math.round(p * CELLS);
+            if (barEl) barEl.textContent = "█".repeat(filled) + "░".repeat(CELLS - filled);
+            if (lossEl) lossEl.textContent = d.emaLoss === null ? "warming" : d.emaLoss.toFixed(3);
+            if (epochEl) epochEl.textContent = String(d.epoch);
+            if (sampleEl && d.headlineSample) renderMorphInto(sampleEl, d.headlineSample);
+          }
+          if (d.headlineAcc !== undefined) {
+            driveConverge(0.15 + 0.85 * d.headlineAcc, 400);
+            maybeExit(d.headlineAcc);
+          }
+        });
+        startWhenReady("preloader");
+        setTimeout(function () { maybeExit(0); }, capMs + 3500);
+      }
+
+      var deciding = isHome && window.TRAINER && !reduced;
+      if (deciding) {
+        var deadline = setTimeout(goFake, 2800);
+        TRAINER.on("ready", function () {
+          clearTimeout(deadline);
+          if (chosen && !realPath) {
+            /* the canned preloader won the race; train quietly anyway so the
+               loss widget, footer, and terminal still carry real telemetry */
+            TRAINER.start("background");
+            return;
+          }
+          goReal();
+        });
+        TRAINER.on("decided", function (s) {
+          /* also fires if the worker dies after a hopeful start */
+          if (!s.eligible) { clearTimeout(deadline); realPath ? endPreloader(false) : goFake(); }
+        });
+        if (TRAINER.decided()) {
+          clearTimeout(deadline);
+          TRAINER.eligible() ? (TRAINER.restored() ? goRestored() : goReal()) : goFake();
+        }
+      } else {
+        goFake();
+      }
 
       var skip = pre.querySelector("[data-skip]");
-      if (skip) skip.addEventListener("click", function () { tl.kill(); endPreloader(false); });
+      if (skip) skip.addEventListener("click", function () { if (tl) tl.kill(); realPath && TRAINER.setMode("background"); endPreloader(false); });
       document.addEventListener("keydown", function onEsc(e) {
-        if (e.key === "Escape" && !pre.classList.contains("done")) { tl.kill(); endPreloader(false); }
+        if (e.key === "Escape" && !pre.classList.contains("done")) { if (tl) tl.kill(); realPath && TRAINER.setMode("background"); endPreloader(false); }
         else if (pre.classList.contains("done")) document.removeEventListener("keydown", onEsc);
       });
+    }
+
+    /* per-character morph: sampled chars render dim until they match the
+       target, matched chars lock at full ink */
+    var HERO_TARGET = "Yash Bambhroliya";
+    function renderMorphInto(el, sampled) {
+      var html = "";
+      for (var i = 0; i < HERO_TARGET.length; i++) {
+        var t = HERO_TARGET[i], s = sampled[i] || " ";
+        if (s === t) {
+          html += '<span class="tok-lock">' + (t === " " ? "&nbsp;" : esc(t)) + "</span>";
+        } else {
+          html += '<span class="tok-miss">' + (s === " " || s === "\n" ? "&nbsp;" : esc(s)) + "</span>";
+        }
+      }
+      el.innerHTML = html;
     }
 
     /* ---------- hero intro: token sampling ---------- */
@@ -264,15 +399,21 @@
         var at = 0;
         /* when the particle field renders the name, the DOM h1 stays hidden */
         if (!body.classList.contains("field-on")) {
-          typeEls.forEach(function (el) {
-            var split = new SplitText(el, { type: "chars" });
-            gsap.set(split.chars, { visibility: "hidden" });
-            split.chars.forEach(function (c) {
-              tl.set(c, { visibility: "visible" }, at);
-              at += 0.028 + Math.random() * 0.03;
+          if (realPath && window.TRAINER && TRAINER.ready()) {
+            /* model-driven morph: h1 chars show live samples until they lock */
+            bindHeroMorph(typeEls);
+            at = 0.9;
+          } else {
+            typeEls.forEach(function (el) {
+              var split = new SplitText(el, { type: "chars" });
+              gsap.set(split.chars, { visibility: "hidden" });
+              split.chars.forEach(function (c) {
+                tl.set(c, { visibility: "visible" }, at);
+                at += 0.028 + Math.random() * 0.03;
+              });
+              at += 0.12;
             });
-            at += 0.12;
-          });
+          }
         } else {
           at = 0.9;
         }
@@ -292,6 +433,48 @@
       } catch (e) {
         gsap.set([role, links], { opacity: 1 });
       }
+    }
+
+    /* h1 as a live sampling surface: each char span shows the model's sampled
+       char (dim) until it matches the target, then locks. Two lines map onto
+       "Yash" (0-3) and "Bambhroliya" (5-15) of the headline string. */
+    function bindHeroMorph(typeEls) {
+      var spans = [];
+      var offsets = [0, 5];
+      typeEls.forEach(function (el, li) {
+        var text = el.textContent;
+        var html = "";
+        for (var i = 0; i < text.length; i++) html += '<span class="tok-miss">' + esc(text[i]) + "</span>";
+        el.innerHTML = html;
+        Array.prototype.forEach.call(el.children, function (span, ci) {
+          spans.push({ span: span, target: text[ci], pos: offsets[li] + ci, locked: false });
+        });
+      });
+      var allLocked = false;
+      var off = TRAINER.on("step", function (d) {
+        if (allLocked || !d.headlineSample) return;
+        var remaining = 0;
+        spans.forEach(function (s) {
+          if (s.locked) return;
+          var sampled = d.headlineSample[s.pos] || " ";
+          if (sampled === s.target) {
+            s.locked = true;
+            s.span.className = "tok-lock";
+            s.span.textContent = s.target;
+          } else {
+            s.span.textContent = sampled === " " || sampled === "\n" ? " " : sampled;
+            remaining++;
+          }
+        });
+        if (remaining === 0) { allLocked = true; off(); }
+      });
+      /* whatever is not locked in 20s locks anyway; the page is not a hostage */
+      setTimeout(function () {
+        if (allLocked) return;
+        allLocked = true;
+        off();
+        spans.forEach(function (s) { s.span.className = "tok-lock"; s.span.textContent = s.target; });
+      }, 20000);
     }
 
     runPreloader();
@@ -381,6 +564,9 @@
       var curve = lossWidget.querySelector("[data-loss-curve]");
       var liveLoss = lossWidget.querySelector("[data-loss-live]");
       var liveEpoch = lossWidget.querySelector("[data-loss-epoch]");
+      var lossLabel = lossWidget.querySelector("[data-loss-label]");
+      var widgetReal = false;
+      var scrollDriver = null;
       if (reduced || !hasGsap) {
         if (liveLoss) liveLoss.textContent = "0.012";
         if (liveEpoch) liveEpoch.textContent = "3";
@@ -388,14 +574,45 @@
         var L = curve.getTotalLength();
         curve.style.strokeDasharray = L;
         curve.style.strokeDashoffset = L;
-        ScrollTrigger.create({
+        scrollDriver = ScrollTrigger.create({
           start: 0,
           end: "max",
           onUpdate: function (self) {
+            if (widgetReal) return;
             var p = self.progress;
             curve.style.strokeDashoffset = String(L * (1 - p));
             if (liveLoss) liveLoss.textContent = (2.31 * Math.pow(0.012 / 2.31, p)).toFixed(3);
             if (liveEpoch) liveEpoch.textContent = String(Math.min(3, 1 + Math.floor(p * 3)));
+          }
+        });
+      }
+
+      /* when the tab is really training, the widget becomes an instrument:
+         the curve is the recorded loss history, not a scroll toy */
+      if (window.TRAINER && lossLabel) {
+        TRAINER.on("step", function (d) {
+          if (!widgetReal) {
+            widgetReal = true;
+            if (scrollDriver) scrollDriver.kill();
+            curve.style.strokeDasharray = "none";
+            curve.style.strokeDashoffset = "0";
+          }
+          var lossTxt = d.emaLoss === null ? "warming" : d.emaLoss.toFixed(3);
+          lossLabel.innerHTML = (d.phase === "warmup" ? "headline" : "corpus") +
+            ' · step ' + d.step + ' · loss <span class="loss-val">' + lossTxt + "</span>";
+          if (d.lossHistory && d.lossHistory.length > 1) {
+            var hist = d.lossHistory;
+            var mx = 0;
+            for (var i = 0; i < hist.length; i++) if (hist[i] > mx) mx = hist[i];
+            mx = Math.max(mx, 0.001);
+            /* high loss plots near the top, so the curve descends as it learns */
+            var pth = "";
+            for (i = 0; i < hist.length; i++) {
+              var x = 2 + (92 * i / (hist.length - 1));
+              var y = 3 + 23 * (1 - hist[i] / mx);
+              pth += (i === 0 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1) + " ";
+            }
+            curve.setAttribute("d", pth.trim());
           }
         });
       }
@@ -511,7 +728,29 @@
 
       var CMDS = {
         help: function () {
-          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+        },
+        sample: function () {
+          if (!window.TRAINER || !TRAINER.ready()) {
+            termPrint("no model this visit: training was skipped (reduced motion, low memory, or save-data). reload without those and one will train.");
+            return;
+          }
+          var st = TRAINER.stats();
+          termPrint('<span class="t-dim">sampling gru-' + Math.round(st.params / 1000) + "k at temp " + (body.getAttribute("data-temp") || "0.7") + " · trained " + Math.round(st.trainedMs / 1000) + "s in your tab</span>");
+          TRAINER.sample(200).then(function (text) {
+            if (text === null) { termPrint("sampler timed out, try again"); return; }
+            termPrint(esc(text).replace(/\n/g, "<br>"), "t-accent");
+          });
+        },
+        train: function (rest) {
+          if (!window.TRAINER || !TRAINER.ready()) { termPrint("no trainer this visit"); return; }
+          var sub = (rest || "stats").trim();
+          if (sub === "stop") { TRAINER.stop(); termPrint("training stopped, weights saved", "t-good"); }
+          else if (sub === "more") { TRAINER.resume(); TRAINER.setMode("background"); termPrint("training resumed", "t-good"); }
+          else {
+            var st = TRAINER.stats();
+            termPrint("tier " + st.tier + " · " + st.params.toLocaleString("en-US") + " params · step " + st.step + " · " + st.tokensSeen.toLocaleString("en-US") + " tokens · " + (st.loss ? "corpus loss " + st.loss.toFixed(3) : "warming") + " · " + Math.round(st.trainedMs / 1000) + "s on your CPU" + (st.restored ? " (restored from a previous visit)" : ""));
+          }
         },
         about: function () {
           termPrint("AI engineer in Gujarat, India. I fine-tune, quantize, serve, and evaluate LLMs in production. Currently at Nextbase Solutions.");
@@ -549,8 +788,11 @@
         termIn.value = "";
         if (!raw) return;
         termPrint('<span class="t-dim">$ ' + esc(raw) + "</span>");
+        /* only the command word is case-folded; arguments keep their case */
+        var firstSpace = raw.search(/\s/);
+        var cmd = (firstSpace === -1 ? raw : raw.slice(0, firstSpace)).toLowerCase();
+        var rest = firstSpace === -1 ? "" : raw.slice(firstSpace + 1).trim();
         var parts = raw.toLowerCase().split(/\s+/);
-        var cmd = parts[0];
         if (cmd === "temp" && parts[1]) {
           var v = parts[1] === "1" ? "1.0" : parts[1] === "0" ? "0.0" : parts[1];
           if (TEMPS.indexOf(v) > -1) { setTemp(v, true); } else { termPrint("usage: temp 0 | 0.7 | 1.0"); }
@@ -559,11 +801,25 @@
           termPrint("drafting email to yashbambhroliya1@gmail.com ...");
           setTimeout(function () { window.location.href = "mailto:yashbambhroliya1@gmail.com?subject=Let's talk"; }, 700);
         } else if (CMDS[cmd]) {
-          CMDS[cmd]();
+          CMDS[cmd](rest);
         } else {
           termPrint("command not found: " + esc(cmd) + " · try <span class='t-good'>help</span>");
         }
       });
+    }
+
+    /* ---------- footer: the model trained in this tab ---------- */
+
+    var evModel = document.querySelector("[data-ev-model]");
+    if (evModel && window.TRAINER) {
+      setInterval(function () {
+        if (!TRAINER.ready()) return;
+        var st = TRAINER.stats();
+        if (!st.step && !st.restored) return;
+        evModel.textContent = st.params.toLocaleString("en-US") + " params · " +
+          (st.loss ? "loss " + st.loss.toFixed(2) + " · " : "") +
+          Math.round(st.trainedMs / 1000) + "s of your CPU";
+      }, 2000);
     }
 
     /* ---------- site evals footer ---------- */
@@ -648,6 +904,26 @@
           b.addEventListener("click", function () { window.FIELD.morphTo(b.getAttribute("data-m")); });
         });
       });
+      if (window.TRAINER) {
+        var trow = document.createElement("label");
+        trow.innerHTML = 'trainer <span data-dbg-train>booting</span>';
+        dbg.appendChild(trow);
+        var tEl = trow.querySelector("[data-dbg-train]");
+        var lastStepAt = 0, lastStepNo = 0, stepsPerSec = 0;
+        TRAINER.on("decided", function (s) { if (!s.eligible) tEl.textContent = "ineligible"; });
+        TRAINER.on("step", function (d) {
+          var now = performance.now();
+          if (lastStepAt) stepsPerSec = 0.9 * stepsPerSec + 0.1 * (1000 * (d.step - lastStepNo) / (now - lastStepAt));
+          lastStepAt = now; lastStepNo = d.step;
+          tEl.textContent = d.phase + " s" + d.step + " " + stepsPerSec.toFixed(1) + "/s" +
+            (d.headlineAcc !== undefined ? " acc " + Math.round(d.headlineAcc * 100) + "%" : "") +
+            (d.emaLoss !== null ? " loss " + d.emaLoss.toFixed(2) : "");
+        });
+        TRAINER.gradcheck();
+        TRAINER.on("gradcheck", function (g) {
+          console.log("[debug] gradcheck fails:", g.fails, "of", g.checked, "worst rel:", g.worst);
+        });
+      }
     }
   });
 })();
