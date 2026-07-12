@@ -866,14 +866,14 @@
       items.forEach(function (el) { io.observe(el); });
     }
 
-    /* masked line rise on section headings, rotating up out of depth */
+    /* masked line rise on section headings: flat, type never bends */
     if (!reduced) {
       document.fonts.ready.then(function () {
         document.querySelectorAll("[data-h2]").forEach(function (h) {
           try {
             var sp = new SplitText(h, { type: "lines", mask: "lines" });
             gsap.from(sp.lines, {
-              yPercent: 110, rotationX: -50, transformPerspective: 700, transformOrigin: "50% 100%",
+              yPercent: 110,
               duration: 0.9, ease: "power4.out", stagger: 0.08,
               scrollTrigger: { trigger: h, start: "top 88%", once: true }
             });
@@ -883,13 +883,14 @@
       });
     }
 
-    /* ---------- depth kit: content enters from depth, reacts to the pointer ---------- */
+    /* ---------- depth kit: flat entrances; 3D is reserved for things that
+       respond to the pointer, never for scripted text ---------- */
 
     if (!reduced && hasGsap) {
       gsap.utils.toArray(".work-row, .card, .xp-row, .stat").forEach(function (el) {
         gsap.from(el, {
-          rotationX: 9, yPercent: 7, transformPerspective: 900, transformOrigin: "50% 0%",
-          duration: 0.95, ease: "power3.out",
+          y: 26,
+          duration: 0.85, ease: "power3.out",
           scrollTrigger: { trigger: el, start: "top 90%", once: true }
         });
       });
