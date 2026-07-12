@@ -1942,6 +1942,10 @@ html:not(.js) .tok { visibility: visible; }
 
 .work-row h3 { font-size: clamp(1.7rem, 3.2vw, 2.5rem); }
 
+/* even rows mirror: the column TRACKS must swap along with the assignments,
+   otherwise the text lands in the narrow number track and wraps word-by-word */
+.work-row:nth-child(even) { grid-template-columns: 1fr minmax(7rem, 11rem) auto; }
+.work-row:nth-child(even) { grid-template-columns: 1fr minmax(7rem, 11rem) auto; }
 .work-row:nth-child(even) .num { grid-column: 2; grid-row: 1; text-align: right; }
 .work-row:nth-child(even) > span:not(.num):not(.meta):not(.ghost) { grid-column: 1; grid-row: 1; }
 
