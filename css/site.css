@@ -266,11 +266,19 @@ section { padding-block: clamp(3.5rem, 9vw, 7rem); }
 }
 
 /* the temp pill is a desktop toy: below 520px the nav cannot seat five
-   items, so it yields its chair before anything clips */
+   items, so it yields its chair before anything clips. The selector
+   carries extra specificity because the base .temp-ctl rule is declared
+   later in this file and would win on order alone. */
 @media (max-width: 32.5rem) {
-  .temp-ctl { display: none; }
-  .brand { font-size: 0.92rem; }
-  .nav-links { font-size: 0.8rem; gap: 0.7rem; }
+  .nav-links .temp-ctl { display: none; }
+  .brand {
+    font-size: 0.92rem;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .nav-links { font-size: 0.8rem; gap: 0.7rem; flex-shrink: 0; }
 }
 
 @media (max-width: 28rem) {
