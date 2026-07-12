@@ -125,7 +125,7 @@ import * as THREE from "../vendor/three.module.min.js";
       map: glowTexture(), color: cssColor("--accent"),
       transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false
     }));
-    glow.scale.set(10, 10, 1);
+    glow.scale.set(13, 13, 1);
     ball.add(glow);
     S.ball = ball;
     S.ballGlow = glow;

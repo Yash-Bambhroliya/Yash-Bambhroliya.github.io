@@ -948,6 +948,42 @@
       });
     }
 
+    /* ---------- cursor halo: a trailing ring, native cursor untouched ---------- */
+
+    if (fine && !reduced && hasGsap) {
+      var halo = document.createElement("div");
+      halo.className = "halo";
+      halo.setAttribute("aria-hidden", "true");
+      document.body.appendChild(halo);
+      var haloX = gsap.quickTo(halo, "x", { duration: 0.42, ease: "power3" });
+      var haloY = gsap.quickTo(halo, "y", { duration: 0.42, ease: "power3" });
+      var HOT = "a, button, input, textarea, select, [role=button], .lp";
+      window.addEventListener("pointermove", function (e) {
+        body.classList.add("halo-on");
+        haloX(e.clientX);
+        haloY(e.clientY);
+        halo.classList.toggle("hot", !!(e.target.closest && e.target.closest(HOT)));
+      }, { passive: true });
+      document.documentElement.addEventListener("pointerleave", function () {
+        body.classList.remove("halo-on");
+      });
+    }
+
+    /* ---------- the house signature: text resolves out of noise ---------- */
+
+    if (!reduced && hasGsap && fine) {
+      document.querySelectorAll(".nav-links a, .brand").forEach(function (el) {
+        var original = el.textContent;
+        el.addEventListener("mouseenter", function () {
+          gsap.to(el, {
+            duration: 0.5,
+            overwrite: "auto",
+            scrambleText: { text: original, chars: "reluant", speed: 1.4 }
+          });
+        });
+      });
+    }
+
     /* ---------- magnetic ---------- */
 
     if (fine && !reduced && hasGsap) {
