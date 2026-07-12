@@ -8,7 +8,34 @@
   font-display: swap;
 }
 
+/* dark-first: the cinematic default. Light is the guest theme. */
 :root {
+  --mode: dark;
+  --paper: #0b0c10;
+  --plane: #08090c;
+  --ink: #f2f3ee;
+  --ink-2: #b9bab2;
+  --ink-3: #7d7e78;
+  --hairline: #22242a;
+  --baseline: #3a3d45;
+  --accent: #3ea6ff;
+  --accent-deep: #7cc0ff;
+  --accent-wash: rgba(62, 166, 255, 0.10);
+  --good: #35c46f;
+  --ring: rgba(255, 255, 255, 0.10);
+  --glow: rgba(62, 166, 255, 0.35);
+
+  --font-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Segoe UI Mono", Consolas, monospace;
+
+  --measure: 42rem;
+  --site-max: 72rem;
+  --pad: clamp(1.25rem, 5vw, 4rem);
+}
+
+:root[data-theme="light"] {
+  --mode: light;
   --paper: #fcfcfb;
   --plane: #f9f9f7;
   --ink: #0b0b0b;
@@ -21,47 +48,11 @@
   --accent-wash: rgba(42, 120, 214, 0.08);
   --good: #006300;
   --ring: rgba(11, 11, 11, 0.10);
-
-  --font-display: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "Segoe UI Mono", Consolas, monospace;
-
-  --measure: 42rem;
-  --site-max: 72rem;
-  --pad: clamp(1.25rem, 5vw, 4rem);
+  --glow: rgba(42, 120, 214, 0.20);
 }
 
-:root[data-theme="dark"] {
-  --paper: #141413;
-  --plane: #0d0d0d;
-  --ink: #f4f4f0;
-  --ink-2: #c3c2b7;
-  --ink-3: #898781;
-  --hairline: #2c2c2a;
-  --baseline: #383835;
-  --accent: #3987e5;
-  --accent-deep: #6da7ec;
-  --accent-wash: rgba(57, 135, 229, 0.12);
-  --good: #0ca30c;
-  --ring: rgba(255, 255, 255, 0.10);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #141413;
-    --plane: #0d0d0d;
-    --ink: #f4f4f0;
-    --ink-2: #c3c2b7;
-    --ink-3: #898781;
-    --hairline: #2c2c2a;
-    --baseline: #383835;
-    --accent: #3987e5;
-    --accent-deep: #6da7ec;
-    --accent-wash: rgba(57, 135, 229, 0.12);
-    --good: #0ca30c;
-    --ring: rgba(255, 255, 255, 0.10);
-  }
-}
+/* deliberately no prefers-color-scheme override: dark is the design.
+   Light lives behind the toggle and persists per visitor. */
 
 /* ---------- base ---------- */
 
@@ -77,6 +68,31 @@ html {
 }
 
 html, body { overflow-x: clip; }
+
+/* cinematic layer: static grain + a soft vignette (dark theme only) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(120% 95% at 50% 15%, transparent 55%, rgba(0, 0, 0, 0.30) 100%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 89;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+:root[data-theme="light"] body::before { background: none; }
+:root[data-theme="light"] body::after { opacity: 0.03; }
 
 body {
   margin: 0;
@@ -200,13 +216,10 @@ section { padding-block: clamp(3.5rem, 9vw, 7rem); }
 
 .theme-toggle:hover { border-color: var(--baseline); color: var(--ink); }
 .theme-toggle svg { width: 15px; height: 15px; fill: currentColor; }
-.theme-toggle .moon { display: none; }
-:root[data-theme="dark"] .theme-toggle .sun { display: none; }
-:root[data-theme="dark"] .theme-toggle .moon { display: block; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .theme-toggle .sun { display: none; }
-  :root:not([data-theme="light"]) .theme-toggle .moon { display: block; }
-}
+/* dark default shows the moon; light shows the sun */
+.theme-toggle .sun { display: none; }
+:root[data-theme="light"] .theme-toggle .sun { display: block; }
+:root[data-theme="light"] .theme-toggle .moon { display: none; }
 
 /* ---------- typography ---------- */
 

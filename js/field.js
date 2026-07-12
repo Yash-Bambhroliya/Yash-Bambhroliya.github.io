@@ -330,6 +330,7 @@ import * as THREE from "../vendor/three.module.min.js";
         geo.getAttribute("aTargetA").needsUpdate = true;
         S.current = "name";
         S.ready = true;
+        self.refreshColors();
         if (S.pending) { self.setConverge(S.pending[0], S.pending[1]); S.pending = null; }
 
         var themeWatch = new MutationObserver(function () { self.refreshColors(); });
@@ -434,6 +435,14 @@ import * as THREE from "../vendor/three.module.min.js";
       if (!S.uniforms) return;
       S.uniforms.uColInk.value = cssColor("--ink-3");
       S.uniforms.uColAccent.value = cssColor("--accent");
+      /* dark mode glows: additive blending and a hotter alpha */
+      var mode = getComputedStyle(document.documentElement).getPropertyValue("--mode").trim();
+      var dark = mode !== "light";
+      S.uniforms.uAlpha.value = dark ? 0.9 : 0.72;
+      if (S.points) {
+        S.points.material.blending = dark ? THREE.AdditiveBlending : THREE.NormalBlending;
+        S.points.material.needsUpdate = true;
+      }
     },
 
     stats: function () {

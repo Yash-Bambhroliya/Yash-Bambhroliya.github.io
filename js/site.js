@@ -14,9 +14,7 @@
   if (saved === "dark" || saved === "light") root.setAttribute("data-theme", saved);
 
   function currentTheme() {
-    var set = root.getAttribute("data-theme");
-    if (set) return set;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return root.getAttribute("data-theme") || "dark";
   }
 
   document.addEventListener("DOMContentLoaded", function () {
