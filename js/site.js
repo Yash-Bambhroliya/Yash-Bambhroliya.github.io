@@ -1456,7 +1456,7 @@
           else if (sub === "more") { TRAINER.resume(); TRAINER.setMode("background"); termPrint("training resumed", "t-good"); }
           else {
             var st = TRAINER.stats();
-            termPrint("tier " + st.tier + " · " + st.params.toLocaleString("en-US") + " params · step " + st.step + " · " + st.tokensSeen.toLocaleString("en-US") + " tokens · " + (st.loss ? "corpus loss " + st.loss.toFixed(3) : "measuring loss") + " · " + Math.round(st.trainedMs / 1000) + "s on your CPU" + (st.restored ? " (restored from a previous visit)" : ""));
+            termPrint("tier " + st.tier + " · " + st.params.toLocaleString("en-US") + " params · step " + st.step + " · " + st.tokensSeen.toLocaleString("en-US") + " tokens · " + (st.loss ? "loss " + st.loss.toFixed(3) : "measuring loss") + " · " + Math.round(st.trainedMs / 1000) + "s on your CPU" + (st.restored ? " (restored from a previous visit)" : ""));
           }
         },
         about: function () {

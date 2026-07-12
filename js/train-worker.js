@@ -385,6 +385,16 @@ function scheduleNextSnap() {
 
 function trainLoop() {
   if (!RUN.active || !M) return;
+  try {
+    trainStep();
+  } catch (err) {
+    /* a bad iteration must not kill the run: report it, skip it, continue */
+    try { postMessage({ type: "trainerror", message: String(err && err.message || err), step: RUN.step }); } catch (e2) {}
+    setTimeout(trainLoop, 120);
+  }
+}
+
+function trainStep() {
   var t0 = performance.now();
   var B = M.B, T = M.T;
 

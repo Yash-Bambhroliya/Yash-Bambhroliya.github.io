@@ -262,7 +262,7 @@ import * as THREE from "../vendor/three.module.min.js";
       bp.y += Math.sin(t * 2.4) * 0.35 + 0.2;
       S.ball.position.copy(bp);
       var pulse = 0.8 + Math.sin(t * 3.1) * 0.15;
-      S.ballGlow.material.opacity = 0.55 + pulse * 0.3;
+      S.ballGlow.material.opacity = (0.55 + pulse * 0.3) * (S.glowDim || 1);
 
       S.trailPts.push(bp.clone());
       if (S.trailPts.length > 64) S.trailPts.shift();
@@ -413,6 +413,17 @@ import * as THREE from "../vendor/three.module.min.js";
       S.ball.material.color = accent;
       S.ballGlow.material.color = accent;
       S.trail.material.color = accent;
+      /* additive glow can only brighten: on the light theme it reads as a
+         washed white blob, so the glow becomes a tinted normal-blend halo */
+      var light = mode() === "light";
+      var blend = light ? THREE.NormalBlending : THREE.AdditiveBlending;
+      S.ballGlow.material.blending = blend;
+      S.trail.material.blending = blend;
+      S.ballGlow.material.needsUpdate = true;
+      S.trail.material.needsUpdate = true;
+      S.glowDim = light ? 0.35 : 1;
+      S.ballGlow.scale.set(light ? 9 : 13, light ? 9 : 13, 1);
+      S.trail.material.opacity = light ? 0.3 : 0.5;
     },
 
     stats: function () {

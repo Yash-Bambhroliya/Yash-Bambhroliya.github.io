@@ -11,7 +11,8 @@
     decided: false, eligible: false, ready: false, restored: false,
     tier: null, params: 0, vocab: 0,
     lastStep: null, doneInfo: null, temp: 0.7,
-    corpusHash: null, startedAt: 0, snaps: []
+    corpusHash: null, startedAt: 0, snaps: [],
+    running: false, lastStepAt: 0
   };
   var pendingSamples = {};
   var reqId = 0;
@@ -97,10 +98,12 @@
       var key = "gru-v1:" + state.corpusHash;
       return idbGet(key).then(function (saved) {
         worker = new Worker("/js/train-worker.js");
-        worker.onerror = function () {
+        worker.onerror = function (e) {
+          try { console.error("[trainer] worker error:", e && e.message, e && e.filename, e && e.lineno); } catch (e2) {}
           state.eligible = false;
+          state.running = false;
           emit("decided", state);
-          try { worker.terminate(); } catch (e) {}
+          try { worker.terminate(); } catch (e3) {}
           worker = null;
         };
         worker.onmessage = onWorkerMessage;
@@ -136,11 +139,16 @@
       emit("ready", state);
     } else if (d.type === "step") {
       state.lastStep = d;
+      state.lastStepAt = performance.now();
       if (d.snap) state.snaps.push(d.snap);
       emit("step", d);
       if (d.snap) emit("snap", d.snap);
+    } else if (d.type === "trainerror") {
+      try { console.error("[trainer] recovered from a bad step:", d.message, "at step", d.step); } catch (e2) {}
+      emit("trainerror", d);
     } else if (d.type === "done") {
       state.doneInfo = d;
+      state.running = false;
       if (d.snap) state.snaps.push(d.snap);
       emit("done", d);
       if (d.snap) emit("snap", d.snap);
@@ -162,6 +170,15 @@
     worker.postMessage({ type: document.hidden ? "pause" : "resume" });
   });
 
+  /* watchdog: a run that claims to be alive but has gone silent gets kicked.
+     Covers lost resume races and any stall the worker cannot see itself. */
+  setInterval(function () {
+    if (!worker || !state.ready || !state.running || document.hidden) return;
+    if (performance.now() - state.lastStepAt > 6000) {
+      worker.postMessage({ type: "resume" });
+    }
+  }, 4000);
+
   window.addEventListener("pagehide", function () { persist(); });
 
   /* ---------- public API ---------- */
@@ -174,10 +191,10 @@
     restored: function () { return state.restored; },
     history: function () { return state.snaps; },
     state: function () { return state; },
-    start: function (mode) { if (worker && state.ready) { state.startedAt = performance.now(); worker.postMessage({ type: "start", mode: mode || "background" }); } },
+    start: function (mode) { if (worker && state.ready) { state.startedAt = performance.now(); state.running = true; state.lastStepAt = performance.now(); worker.postMessage({ type: "start", mode: mode || "background" }); } },
     setMode: function (mode) { if (worker) worker.postMessage({ type: "mode", mode: mode }); },
-    stop: function () { if (worker) worker.postMessage({ type: "stop" }); },
-    resume: function () { if (worker) worker.postMessage({ type: "resume" }); },
+    stop: function () { state.running = false; if (worker) worker.postMessage({ type: "stop" }); },
+    resume: function () { if (worker) { state.running = true; state.lastStepAt = performance.now(); worker.postMessage({ type: "resume" }); } },
     setTemp: function (v) { state.temp = v; if (worker) worker.postMessage({ type: "temp", value: v }); },
     sample: function (n, seed) {
       return new Promise(function (resolve) {
@@ -198,7 +215,9 @@
         tier: state.tier, params: state.params, vocab: state.vocab,
         step: s.step || (lastSnap && lastSnap.step) || 0, tokensSeen: s.tokensSeen || 0,
         trainedMs: s.trainedMs || (state.doneInfo && state.doneInfo.trainedMs) || (lastSnap && lastSnap.ms) || 0,
-        loss: s.corpusLoss !== undefined && s.corpusLoss !== null ? s.corpusLoss : (lastSnap ? lastSnap.loss : undefined),
+        /* display-gated: the raw corpus ema spikes at the phase switch and
+           instruments must never show that number */
+        loss: s.emaLoss !== undefined && s.emaLoss !== null ? s.emaLoss : (lastSnap && lastSnap.loss !== null ? lastSnap.loss : undefined),
         phase: s.phase, restored: state.restored
       };
     },
