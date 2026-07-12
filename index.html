@@ -136,6 +136,7 @@
           <div class="learn-name" data-learn-name aria-hidden="true"></div>
           <p class="learn-endnote" data-learn-endnote></p>
           <div class="learn-rail" aria-hidden="true"><span class="learn-rail-dot" data-learn-dot></span></div>
+          <p class="learn-playline"><button class="learn-play" type="button" data-learn-play hidden>think you write more like me than it does? challenge it</button></p>
         </div>
       </div>
     </section>
@@ -306,6 +307,40 @@
     <span data-loss-label>epoch <span data-loss-epoch>1</span>/3 · loss <span class="loss-val" data-loss-live>2.310</span></span>
   </div>
 
+  <div class="duel" data-duel hidden role="dialog" aria-modal="true" aria-label="Beat the model">
+    <div class="duel-panel">
+      <div class="duel-head">
+        <span class="duel-title">beat the model</span>
+        <span class="duel-score" data-duel-score>you 0 · it 0</span>
+        <button class="duel-close" type="button" data-duel-close aria-label="Close">×</button>
+      </div>
+      <p class="duel-intro" data-duel-intro>ten rounds. you and the network read the same sixty characters of my writing and guess what comes next. it commits its answer before your choices appear, so nobody cheats.</p>
+      <div class="duel-round" data-duel-round hidden>
+        <div class="duel-meta">
+          <span data-duel-count>round 1/10</span>
+          <span class="duel-live" data-duel-live hidden>it is still training as you play</span>
+        </div>
+        <div class="duel-ctx"><span data-duel-ctx></span><span class="duel-caret" aria-hidden="true"></span></div>
+        <div class="duel-choices" data-duel-choices></div>
+        <div class="duel-reveal" data-duel-reveal hidden>
+          <div class="duel-verdict" data-duel-verdict></div>
+          <pre class="duel-top" data-duel-top></pre>
+          <button class="duel-next" type="button" data-duel-next>next</button>
+        </div>
+      </div>
+      <div class="duel-end" data-duel-end hidden>
+        <div class="duel-final" data-duel-final></div>
+        <p class="duel-line" data-duel-line></p>
+        <div class="duel-actions">
+          <button type="button" data-duel-share>copy your result</button>
+          <a href="mailto:yashbambhroliya1@gmail.com">email me</a>
+          <button type="button" data-duel-again>play again</button>
+        </div>
+      </div>
+      <button class="duel-start" type="button" data-duel-start>start</button>
+    </div>
+  </div>
+
   <div class="term" data-term aria-label="Terminal" role="dialog">
     <div class="term-out" data-term-out></div>
     <div class="term-in">
@@ -324,6 +359,7 @@
   <script src="/js/trainer.js" defer></script>
   <script src="/js/site.js" defer></script>
   <script src="/js/fit.js" defer></script>
+  <script src="/js/duel.js" defer></script>
   <script src="/js/greet.js" defer></script>
 </body>
 </html>

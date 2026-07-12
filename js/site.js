@@ -559,6 +559,16 @@
 
       function setup(getSnaps, kind) {
         var live = kind === "live";
+        /* the duel only exists where a real model does */
+        if (kind !== "recorded") {
+          var playBtn = section.querySelector("[data-learn-play]");
+          if (playBtn) {
+            playBtn.hidden = false;
+            playBtn.addEventListener("click", function () {
+              if (window.DUEL) DUEL.open();
+            });
+          }
+        }
         if (kind === "restored" && el.sub) {
           el.sub.textContent = "A network trained on your device during an earlier visit and saved in your browser. This is its training run, replayed.";
         } else if (kind === "recorded" && el.sub) {
@@ -965,7 +975,15 @@
 
       var CMDS = {
         help: function () {
-          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>model</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>play</span> · <span class='t-good'>model</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+        },
+        play: function () {
+          if (!window.TRAINER || !TRAINER.ready() || !window.DUEL) {
+            termPrint("no live model this visit, nothing to play against");
+            return;
+          }
+          closeTerm();
+          DUEL.open();
         },
         model: function () {
           if (!window.SCENE || !document.body.classList.contains("scene-on")) {

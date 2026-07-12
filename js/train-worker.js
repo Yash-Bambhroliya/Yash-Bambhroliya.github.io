@@ -601,6 +601,39 @@ onmessage = function (e) {
   } else if (d.type === "sample") {
     if (!M) return;
     postMessage({ type: "sampled", text: sampleText(M.model, d.n || 160, RUN.temp, d.seed), reqId: d.reqId });
+  } else if (d.type === "quiz") {
+    /* one duel round: a real corpus snippet, the true next char, and the
+       model's committed guess plus its top-5 distribution. Everything is
+       decided here, before the player sees the choices. */
+    if (!M) return;
+    var CTX = 60;
+    var off = CTX + 1 + Math.floor(Math.random() * (M.ids.length - CTX - 2));
+    /* land on a guessable target: letters and common punctuation */
+    var guard = 0;
+    while (!/[a-z .,]/.test(M.itos[M.ids[off]]) && guard++ < 500) {
+      off++;
+      if (off >= M.ids.length - 1) off = CTX + 1;
+    }
+    var hq = new Float32Array(M.H);
+    var lg = M.infLogits;
+    var ctx = "";
+    for (var qi = off - CTX; qi < off; qi++) {
+      ctx += M.itos[M.ids[qi]];
+      forwardChar(M.model, M.ids[qi], hq, qi === off - 1 ? lg : null);
+    }
+    var qmx = -1e30;
+    for (var qq = 0; qq < M.V; qq++) if (lg[qq] > qmx) qmx = lg[qq];
+    var qsum = 0, dist = [];
+    for (qq = 0; qq < M.V; qq++) { var qe = Math.exp(lg[qq] - qmx); dist.push([M.itos[qq], qe]); qsum += qe; }
+    for (qq = 0; qq < dist.length; qq++) dist[qq][1] /= qsum;
+    dist.sort(function (a, b) { return b[1] - a[1]; });
+    postMessage({
+      type: "quiz", reqId: d.reqId,
+      context: ctx,
+      truth: M.itos[M.ids[off]],
+      pick: dist[0][0],
+      top: dist.slice(0, 5)
+    });
   } else if (d.type === "headline") {
     if (!M) return;
     var hl = headline(M.model, HEADLINE, RUN.temp);
