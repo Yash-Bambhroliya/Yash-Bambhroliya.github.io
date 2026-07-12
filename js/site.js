@@ -639,15 +639,15 @@
     })();
 
     /* ---------- watch it learn: the training run, replayed by scroll ----------
-       One stage, three honest sources, never blended:
-       live      the model training in this tab right now
-       restored  the run this device recorded on an earlier visit
-       recorded  a bundled recording of the same network, for browsers
-                 that skip live training. Always labeled. */
+       The section owns its final layout from first paint (placeholders, then
+       data), because inserting 2300px of pin space after load shifts the page
+       under the reader and breaks hash landings. Three honest sources, never
+       blended and always labeled: live, your earlier run, or a recording. */
 
     (function () {
       var section = document.querySelector("[data-learn]");
       if (!section) return;
+      if (!isHome) return;
       var el = {
         sub: section.querySelector("[data-learn-sub]"),
         badge: section.querySelector("[data-learn-badge]"),
@@ -703,66 +703,91 @@
         }
       }
 
-      function setup(getSnaps, kind) {
-        var live = kind === "live";
-        if (kind === "restored" && el.sub) {
-          el.sub.textContent = "A network trained on your device during an earlier visit and saved in your browser. This is its training run, replayed.";
-        } else if (kind === "recorded" && el.sub) {
-          el.sub.textContent = "Your browser skipped live training this visit, so this is a recording of the same network learning from scratch, step by step.";
-        }
+      var getSnaps = function () { return []; };
+      var kind = null;
+      var doneMs = 0;
+      var lastP = 0;
+      var pinned = false;
 
-        var doneMs = 0;
-        function setBadge() {
-          if (kind === "recorded") { el.badge.textContent = "recorded run"; return; }
-          if (kind === "restored") { el.badge.textContent = "your earlier run"; return; }
-          if (doneMs) { el.badge.textContent = "trained in " + Math.round(doneMs / 1000) + "s"; el.badge.classList.remove("pulse"); }
-          else { el.badge.textContent = "live now"; el.badge.classList.add("pulse"); }
-        }
-        if (live && window.TRAINER) {
-          TRAINER.on("done", function (d) { doneMs = d.trainedMs || 1; setBadge(); });
-        }
-        setBadge();
+      function setBadge() {
+        if (kind === null) { el.badge.textContent = "waking"; return; }
+        if (kind === "recorded") { el.badge.textContent = "recorded run"; return; }
+        if (kind === "restored") { el.badge.textContent = "your earlier run"; return; }
+        if (doneMs) { el.badge.textContent = "trained in " + Math.round(doneMs / 1000) + "s"; el.badge.classList.remove("pulse"); }
+        else { el.badge.textContent = "live now"; el.badge.classList.add("pulse"); }
+      }
 
-        function endnote(last) {
-          var secs = Math.max(1, Math.round(last.ms / 1000));
-          return kind === "recorded"
-            ? "from random noise to my name in " + secs + "s of cpu. recorded from a real run of this exact network."
-            : "from random noise to my name in " + secs + "s of cpu, right here in your browser. nothing prerendered, nothing sent anywhere.";
-        }
+      function endnote(last) {
+        var secs = Math.max(1, Math.round(last.ms / 1000));
+        return kind === "recorded"
+          ? "from random noise to my name in " + secs + "s of cpu. recorded from a real run of this exact network."
+          : "from random noise to my name in " + secs + "s of cpu, right here in your browser. nothing prerendered, nothing sent anywhere.";
+      }
 
-        var lastP = 0;
-        function renderAtP(p) {
-          lastP = p;
-          var snaps = getSnaps();
-          var n = snaps.length;
-          if (!n) return;
-          var t = Math.min(1, p / 0.9);
-          renderSnap(snaps[Math.min(n - 1, Math.round(t * (n - 1)))]);
-          if (el.dot) el.dot.style.left = (p * 100).toFixed(2) + "%";
-          var done = p > 0.93;
-          section.classList.toggle("learn-done", done);
-          if (done) el.endnote.textContent = endnote(snaps[n - 1]);
-        }
+      function renderAtP(p) {
+        lastP = p;
+        var snaps = getSnaps();
+        var n = snaps.length;
+        if (el.dot) el.dot.style.left = (p * 100).toFixed(2) + "%";
+        if (!n) return;
+        var t = Math.min(1, p / 0.9);
+        renderSnap(snaps[Math.min(n - 1, Math.round(t * (n - 1)))]);
+        var done = p > 0.93;
+        section.classList.toggle("learn-done", done);
+        if (done) el.endnote.textContent = endnote(snaps[n - 1]);
+      }
 
-        section.hidden = false;
-
-        if (reduced || !hasGsap || typeof ScrollTrigger === "undefined") {
-          renderAtP(1);
-          return;
-        }
-
+      /* the pin exists from first paint so the page never shifts later */
+      if (!reduced && hasGsap && typeof ScrollTrigger !== "undefined") {
+        pinned = true;
         ScrollTrigger.create({
           trigger: section, start: "top top", end: "+=240%",
           pin: true, scrub: 0.35,
           onUpdate: function (self) { renderAtP(self.progress); }
         });
         ScrollTrigger.refresh();
-        renderAtP(0);
+        /* a hash landing must anchor against the final layout, pin included */
+        if (location.hash && location.hash.length > 1) {
+          var tgt = null;
+          try { tgt = document.querySelector(location.hash); } catch (e) {}
+          if (tgt) {
+            var y = tgt.getBoundingClientRect().top + window.scrollY - 56;
+            if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
+            else window.scrollTo(0, y);
+            ScrollTrigger.update();
+          }
+        }
+      }
 
-        /* while the model is still training, fresh moments join the replay */
-        if (live && window.TRAINER) {
+      function bindSource(getter, k) {
+        getSnaps = getter;
+        kind = k;
+        if (k === "restored" && el.sub) {
+          el.sub.textContent = "A network trained on your device during an earlier visit and saved in your browser. This is its training run, replayed.";
+        } else if (k === "recorded" && el.sub) {
+          el.sub.textContent = "Your browser skipped live training this visit, so this is a recording of the same network learning from scratch, step by step.";
+        }
+        if (k === "live" && window.TRAINER) {
+          var st = TRAINER.state();
+          doneMs = st.doneInfo ? (st.doneInfo.trainedMs || 1) : 0;
+          TRAINER.on("done", function (d) { doneMs = d.trainedMs || 1; setBadge(); });
+          /* while the model is still training, fresh moments join the replay */
           TRAINER.on("snap", function () { renderAtP(lastP); });
         }
+        setBadge();
+        if (!pinned) { renderAtP(1); return; }
+        renderAtP(lastP);
+        ScrollTrigger.refresh();
+      }
+
+      function fail() {
+        /* no data will ever arrive: fold the section away cleanly */
+        if (typeof ScrollTrigger !== "undefined") {
+          ScrollTrigger.getAll().forEach(function (t) { if (t.trigger === section) t.kill(true); });
+        }
+        var spacer = section.closest(".pin-spacer");
+        (spacer || section).remove();
+        if (typeof ScrollTrigger !== "undefined") ScrollTrigger.refresh();
       }
 
       function useRecording() {
@@ -770,9 +795,9 @@
           if (!r.ok) throw new Error("replay " + r.status);
           return r.json();
         }).then(function (j) {
-          if (!j || !j.snaps || j.snaps.length < 6) return;
-          setup(function () { return j.snaps; }, "recorded");
-        }).catch(function () { /* no data, the section stays hidden */ });
+          if (!j || !j.snaps || j.snaps.length < 6) { fail(); return; }
+          bindSource(function () { return j.snaps; }, "recorded");
+        }).catch(fail);
       }
 
       var settled = false;
@@ -781,13 +806,12 @@
         settled = true;
         if (TRAINER.eligible() && TRAINER.ready()) {
           if (TRAINER.restored() && TRAINER.history().length < 6) { useRecording(); return; }
-          setup(function () { return TRAINER.history(); }, TRAINER.restored() ? "restored" : "live");
+          bindSource(function () { return TRAINER.history(); }, TRAINER.restored() ? "restored" : "live");
         } else {
           useRecording();
         }
       }
 
-      if (!isHome) return;
       if (window.TRAINER) {
         /* decided() flips before the worker boots; only ready() or a firm
            ineligible verdict settles which source this page gets */
