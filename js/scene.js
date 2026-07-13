@@ -16,6 +16,8 @@ import * as THREE from "../vendor/three.module.min.js";
     interlude: 0, recede: 0,
     journey: 0, journeyShown: 0, lookBack: 0, lookShown: 0,
     demo: { mode: null, t: 0, aux: null },
+    inspect: { on: false, blend: 0, kind: null, target: null, radius: 40, theta: 0, phi: 1.1, tTheta: 0, tPhi: 1.1, tRadius: 40 },
+    netMats: [],
     netPts: {},
     mouse: { x: 0, y: 0, on: false, sx: 0, sy: 0 },
     ball: null, ballGlow: null, trail: null, trailPts: [],
@@ -156,9 +158,12 @@ import * as THREE from "../vendor/three.module.min.js";
 
   /* ---------- the network (interlude scene) ---------- */
 
+  var NET_SCALE = 0.55;
+
   function buildNet(dims) {
     var group = new THREE.Group();
     S.netPts = {};
+    S.netMats = [];
     var accent = cssColor("--accent"), ink = cssColor("--ink-2");
     var mats = [];
 
@@ -175,6 +180,7 @@ import * as THREE from "../vendor/three.module.min.js";
         depthWrite: false, sizeAttenuation: true
       });
       mats.push(m);
+      S.netMats.push(m);
       if (key) S.netPts[key] = { geo: geo, n: n };
       return new THREE.Points(geo, m);
     }
@@ -234,7 +240,10 @@ import * as THREE from "../vendor/three.module.min.js";
     group.add(wires(hidPts, hidPts, Math.round(240 * wireCount), 0.14));
     group.add(wires(hidPts, outPts, Math.round(420 * wireCount), 0.10));
 
-    group.position.set(0, 6, -290);
+    /* the mind lives in the world now: hovering above the basin the
+       descent walks toward, visible from the whole journey */
+    group.position.set(58, 16, -72);
+    group.scale.setScalar(NET_SCALE);
     S.net = group;
     return group;
   }
@@ -251,6 +260,11 @@ import * as THREE from "../vendor/three.module.min.js";
       new THREE.Vector3(n.x, n.y, n.z + 40),
       new THREE.Vector3(n.x - 2, n.y + 2, n.z + 84 + 26)
     ]);
+  }
+
+  function netCenter() {
+    var n = S.net.position;
+    return new THREE.Vector3(n.x, n.y, n.z + 42 * NET_SCALE);
   }
 
   /* ---------- guided demos: light the layers, stage the camera ---------- */
@@ -345,20 +359,18 @@ import * as THREE from "../vendor/three.module.min.js";
       S.trail.geometry.setDrawRange(0, S.trailPts.length);
     }
 
-    /* the network exists only inside the fly-through; idling in the fog it
-       reads as an artifact, worst on the light theme */
+    /* the network is a citizen of the landscape: always there, pulsing
+       above the basin. Its wobble pauses while it is being staged. */
     var demoNet = S.demo.mode === "pass" || S.demo.mode === "shot";
+    var inspectNet = S.inspect.kind === "net" && (S.inspect.on || S.inspect.blend > 0.01);
     var flightOn = S.interlude > 0.001;
-    var netOn = flightOn || demoNet;
     if (S.net) {
-      S.net.visible = netOn;
-      if (netOn) {
-        for (i = 0; i < S.pulseMats.length; i++) {
-          var m = S.pulseMats[i];
-          m.opacity = m.userData.base * (0.7 + 0.5 * Math.sin(t * 2 + i * 1.7));
-        }
-        S.net.rotation.z = flightOn ? Math.sin(t * 0.12) * 0.05 : 0;
+      S.net.visible = true;
+      for (i = 0; i < S.pulseMats.length; i++) {
+        var m = S.pulseMats[i];
+        m.opacity = m.userData.base * (0.7 + 0.5 * Math.sin(t * 2 + i * 1.7));
       }
+      S.net.rotation.z = (demoNet || inspectNet) ? 0 : Math.sin(t * 0.12) * 0.05;
     }
 
     /* camera: the reader walks the same valley the model descends.
@@ -403,15 +415,15 @@ import * as THREE from "../vendor/three.module.min.js";
         var dt = S.demo.t;
         var dw = smoothstep(Math.min(dt / 0.12, (1 - dt) / 0.1, 1));
         var dPos = null, dLook = null;
-        var n = S.net.position;
+        var nc = netCenter();
         if (S.demo.mode === "pass") {
-          dPos = new THREE.Vector3(n.x - 150, n.y + 12, n.z + 42);
-          dLook = new THREE.Vector3(n.x, n.y, n.z + 42);
+          dPos = new THREE.Vector3(nc.x - 88, nc.y + 7, nc.z);
+          dLook = nc.clone();
           applyPass(dt, S.demo.aux);
         } else if (S.demo.mode === "shot") {
           var sa = -0.4 + dt * 0.55;
-          dPos = new THREE.Vector3(n.x + Math.sin(sa) * 165, n.y + 20 + dt * 10, n.z + 42 + Math.cos(sa) * 165);
-          dLook = new THREE.Vector3(n.x, n.y, n.z + 42);
+          dPos = new THREE.Vector3(nc.x + Math.sin(sa) * 95, nc.y + 12 + dt * 6, nc.z + Math.cos(sa) * 95);
+          dLook = nc.clone();
           applyShot(dt);
         } else if (S.demo.mode === "orbitBall") {
           var bp2 = ballPos(Math.min(0.999, S.trainingShown));
@@ -423,6 +435,22 @@ import * as THREE from "../vendor/three.module.min.js";
           pos.lerp(dPos, dw);
           lk.lerp(dLook, dw);
         }
+      }
+
+      /* free inspection: a damped orbit the visitor drives */
+      var I = S.inspect;
+      if (I.on || I.blend > 0.001) {
+        I.blend += ((I.on ? 1 : 0) - I.blend) * 0.09;
+        I.theta += (I.tTheta - I.theta) * 0.12;
+        I.phi += (I.tPhi - I.phi) * 0.12;
+        I.radius += (I.tRadius - I.radius) * 0.12;
+        if (I.kind === "ball") I.target = ballPos(Math.min(0.999, S.trainingShown));
+        if (I.target) {
+          var iPos = new THREE.Vector3().setFromSphericalCoords(I.radius, I.phi, I.theta).add(I.target);
+          pos.lerp(iPos, I.blend);
+          lk.lerp(I.target, I.blend);
+        }
+        if (!I.on && I.blend < 0.01) { I.blend = 0; I.kind = null; }
       }
 
       cam.position.copy(pos);
@@ -492,6 +520,39 @@ import * as THREE from "../vendor/three.module.min.js";
       S.lookBack = Math.max(0, Math.min(1, lookBack || 0));
     },
     setRecede: function (r) { S.recede = Math.max(0, Math.min(1, r)); },
+    /* free inspection: enter from a demo's final frame, orbit, zoom, leave */
+    inspectStart: function (kind) {
+      if (!S.ready) return;
+      var I = S.inspect;
+      I.kind = kind;
+      I.target = kind === "ball" ? ballPos(Math.min(0.999, S.trainingShown)) : netCenter();
+      var sph = new THREE.Spherical().setFromVector3(S.camera.position.clone().sub(I.target));
+      I.radius = I.tRadius = Math.max(6, sph.radius);
+      I.theta = I.tTheta = sph.theta;
+      I.phi = I.tPhi = Math.min(1.45, Math.max(0.3, sph.phi));
+      I.on = true;
+      I.blend = 1;
+      /* the choreography is over; keep its lighting, drop its camera */
+      S.demo.mode = null;
+      S.demo.aux = null;
+    },
+    inspectMove: function (dx, dy) {
+      var I = S.inspect;
+      if (!I.on) return;
+      I.tTheta -= dx * 0.005;
+      I.tPhi = Math.min(1.45, Math.max(0.3, I.tPhi - dy * 0.004));
+    },
+    inspectZoom: function (dz) {
+      var I = S.inspect;
+      if (!I.on) return;
+      var lim = I.kind === "ball" ? [7, 48] : [16, 110];
+      I.tRadius = Math.min(lim[1], Math.max(lim[0], I.tRadius * (dz > 0 ? 1.09 : 0.92)));
+    },
+    inspectEnd: function () {
+      S.inspect.on = false;
+      resetLayers();
+    },
+
     /* guided demos for the terminal: mode pass | shot | orbitBall, t 0..1 */
     demo: function (mode, t, aux) {
       if (!S.ready) return;
@@ -545,6 +606,20 @@ import * as THREE from "../vendor/three.module.min.js";
       S.glowDim = light ? 0.35 : 1;
       S.ballGlow.scale.set(light ? 9 : 13, light ? 9 : 13, 1);
       S.trail.material.opacity = light ? 0.3 : 0.5;
+      /* the always-visible net follows the same rule: additive bloom on
+         dark, tinted normal blending on paper, and it drinks the accent */
+      var ink2 = cssColor("--ink-2");
+      (S.netMats || []).forEach(function (nm, i) {
+        nm.blending = blend;
+        nm.color = i === 1 ? accent : ink2;
+        nm.opacity = light ? 0.75 : 1;
+        nm.needsUpdate = true;
+      });
+      S.pulseMats.forEach(function (pm) {
+        pm.blending = blend;
+        pm.color = accent;
+        pm.needsUpdate = true;
+      });
     },
 
     stats: function () {

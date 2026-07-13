@@ -670,33 +670,80 @@
       }
 
       var busy = false;
+      var exitBtn = null;
+      function ensureExit() {
+        if (exitBtn) return;
+        exitBtn = document.createElement("button");
+        exitBtn.type = "button";
+        exitBtn.className = "demo-exit";
+        exitBtn.textContent = "return";
+        document.body.appendChild(exitBtn);
+      }
+
       function runDemo(mode, secs, aux, caps, onDone) {
         if (busy || !hasGsap) return;
         busy = true;
         var st = { t: 0 };
         var lastCap = -1;
+        var inspecting = false;
+        var dragging = false, lastX = 0, lastY = 0;
 
         /* the curtain: the page steps aside so the stage owns the screen */
         body.classList.add("demo-on");
+        ensureExit();
+        if (lenis) lenis.stop();
+
         var tween = null;
-        var cancels = ["wheel", "touchstart", "pointerdown"];
-        function finish(cancelled) {
-          cancels.forEach(function (ev) { window.removeEventListener(ev, cancel); });
-          document.removeEventListener("keydown", cancel);
+
+        function onWheel(e) {
+          e.preventDefault();
+          if (inspecting) window.SCENE.inspectZoom(e.deltaY);
+        }
+        function onDown(e) {
+          if (!inspecting) return;
+          if (exitBtn && exitBtn.contains(e.target)) return;
+          dragging = true;
+          lastX = e.clientX; lastY = e.clientY;
+        }
+        function onMove(e) {
+          if (!dragging) return;
+          window.SCENE.inspectMove(e.clientX - lastX, e.clientY - lastY);
+          lastX = e.clientX; lastY = e.clientY;
+        }
+        function onUp() { dragging = false; }
+        function onKey(e) { if (e.key === "Escape") exit(); }
+        function onExitClick() { exit(); }
+
+        window.addEventListener("wheel", onWheel, { passive: false });
+        window.addEventListener("pointerdown", onDown);
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+        document.addEventListener("keydown", onKey);
+        exitBtn.addEventListener("click", onExitClick);
+
+        function exit() {
+          if (!busy) return;
           if (tween) tween.kill();
-          window.SCENE.demo(null, 1);
+          if (inspecting) window.SCENE.inspectEnd();
+          else window.SCENE.demo(null, 1);
+          window.removeEventListener("wheel", onWheel);
+          window.removeEventListener("pointerdown", onDown);
+          window.removeEventListener("pointermove", onMove);
+          window.removeEventListener("pointerup", onUp);
+          document.removeEventListener("keydown", onKey);
+          exitBtn.removeEventListener("click", onExitClick);
           capOn(null);
           body.classList.remove("demo-on");
+          if (lenis) lenis.start();
           busy = false;
-          if (!cancelled && onDone) onDone();
         }
-        function cancel() { if (busy) finish(true); }
-        /* armed a beat later so the launching click cannot cancel it */
-        setTimeout(function () {
-          if (!busy) return;
-          cancels.forEach(function (ev) { window.addEventListener(ev, cancel, { passive: true }); });
-          document.addEventListener("keydown", cancel);
-        }, 500);
+
+        function enterInspect() {
+          inspecting = true;
+          window.SCENE.inspectStart(mode === "orbitBall" ? "ball" : "net");
+          capOn("yours now: drag to look around · scroll to zoom · return or esc to leave");
+          if (onDone) onDone();
+        }
 
         tween = gsap.to(st, {
           t: 1, duration: secs, ease: "power1.inOut",
@@ -709,7 +756,7 @@
               }
             }
           },
-          onComplete: function () { finish(false); }
+          onComplete: enterInspect
         });
       }
 

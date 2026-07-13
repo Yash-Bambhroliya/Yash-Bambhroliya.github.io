@@ -2168,6 +2168,33 @@ body.demo-on .shared-banner,
 body.demo-on .halo,
 body.demo-on .thread { opacity: 0; }
 
+/* the return door and touch behavior while on stage */
+body.demo-on { touch-action: none; }
+
+.demo-exit {
+  position: fixed;
+  top: 1.3rem;
+  right: 1.4rem;
+  z-index: 175;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0.5rem 1.2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+  box-shadow: var(--elev-1);
+}
+
+body.demo-on .demo-exit { opacity: 1; pointer-events: auto; }
+.demo-exit:hover { border-color: var(--accent); }
+
 /* ---------- guided demo captions ---------- */
 
 .model-cap {
