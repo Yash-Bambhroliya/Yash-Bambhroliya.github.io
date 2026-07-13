@@ -770,7 +770,7 @@
         busy: function () { return busy; },
         a: function (say) {
           if (!sceneOn() || !live()) { if (say) say("the live model or the 3D layer is off this visit"); return; }
-          TRAINER.probe("Yash").then(function (d) {
+          TRAINER.probe("Yas").then(function (d) {
             if (!d) { if (say) say("the model did not answer, try again"); return; }
             runDemo("pass", 11, { inIdx: d.seedIdx || 0, probs: d.probs }, [
               [0.02, "this is the network in your tab"],
@@ -815,9 +815,9 @@
             return;
           }
           say(std.params.toLocaleString("en-US") + " params · tier " + std.tier + " · step " + std.step.toLocaleString("en-US") + (std.loss ? " · loss " + std.loss.toFixed(3) : "") + " · " + Math.round(std.trainedMs / 1000) + "s of your cpu");
-          TRAINER.probe("Yash").then(function (d) {
+          TRAINER.probe("Yas").then(function (d) {
             if (!d) return;
-            say("<span class='t-dim'>next-char probe after \"Yash\"</span>");
+            say("<span class='t-dim'>next-char probe after \"Yas\"</span>");
             d.top.forEach(function (t) {
               var bar = "█".repeat(Math.max(1, Math.round(t[1] * 16)));
               say(esc(glyph(t[0])) + "  <span class='p-bar'>" + bar + "</span> " + t[1].toFixed(2));
