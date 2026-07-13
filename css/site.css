@@ -2176,6 +2176,101 @@ html.js[data-theme="light"] .card {
 
 .model-cap.on { opacity: 1; transform: translate(-50%, 0); }
 
+/* ---------- the model dock ---------- */
+
+.model-dock {
+  position: fixed;
+  left: 1rem;
+  bottom: 6.8rem;
+  z-index: 165;
+  width: min(21rem, calc(100vw - 2rem));
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  box-shadow: var(--elev-2);
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-spring);
+}
+
+.model-dock.open { opacity: 1; transform: none; pointer-events: auto; }
+
+.model-dock .dock-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.model-dock button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 0.42rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--hairline) 55%, transparent);
+  transition: color var(--dur-1) var(--ease-out), padding-left var(--dur-1) var(--ease-out);
+}
+
+.model-dock button:last-of-type { border-bottom: 0; }
+.model-dock button:hover { color: var(--accent); padding-left: 0.4rem; }
+
+.model-dock .dock-spec {
+  border-top: 1px solid var(--hairline);
+  margin-top: 0.5rem;
+  padding-top: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.9;
+  color: var(--ink-2);
+  max-height: 14rem;
+  overflow-y: auto;
+  overflow-wrap: break-word;
+}
+
+.model-dock .dock-spec .p-bar { color: var(--accent); }
+.model-dock .dock-spec .t-dim { color: var(--ink-3); }
+.model-dock .dock-spec .t-accent { color: var(--accent); }
+
+.loss-widget { transition: border-color var(--dur-1) var(--ease-out); }
+.loss-widget:hover { border-color: var(--baseline); }
+
+/* the finale invitation */
+.learn-meet {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity var(--dur-3) var(--ease-out) 0.15s, transform var(--dur-3) var(--ease-out) 0.15s;
+}
+
+.learn-done .learn-meet { opacity: 1; transform: none; }
+
+.learn-meet button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+.learn-meet button:hover { text-decoration-color: var(--accent); }
+
 /* ---------- the construction toggle (press g) ---------- */
 
 .drawing {

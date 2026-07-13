@@ -650,6 +650,118 @@
       TRAINER.ready() ? showNote() : TRAINER.on("ready", showNote);
     })();
 
+    /* ---------- meet the model: one set of demos, three doors ----------
+       The terminal, the loss-widget dock, and the replay finale all fire
+       the same guided runners. say() is an optional line sink so results
+       can land in whichever surface launched them. */
+
+    var DEMOS = (function () {
+      var capEl = null;
+      function capOn(text) {
+        if (!capEl) {
+          capEl = document.createElement("div");
+          capEl.className = "model-cap";
+          capEl.setAttribute("aria-hidden", "true");
+          document.body.appendChild(capEl);
+        }
+        if (text === null) { capEl.classList.remove("on"); return; }
+        capEl.textContent = text;
+        capEl.classList.add("on");
+      }
+
+      var busy = false;
+      function runDemo(mode, secs, aux, caps, onDone) {
+        if (busy || !hasGsap) return;
+        busy = true;
+        var st = { t: 0 };
+        var lastCap = -1;
+        gsap.to(st, {
+          t: 1, duration: secs, ease: "power1.inOut",
+          onUpdate: function () {
+            window.SCENE.demo(mode, Math.min(st.t, 0.999), aux);
+            for (var i = caps.length - 1; i >= 0; i--) {
+              if (st.t >= caps[i][0]) {
+                if (lastCap !== i) { lastCap = i; capOn(caps[i][1]); }
+                break;
+              }
+            }
+          },
+          onComplete: function () {
+            window.SCENE.demo(null, 1);
+            capOn(null);
+            busy = false;
+            if (onDone) onDone();
+          }
+        });
+      }
+
+      function sceneOn() { return !!(window.SCENE && document.body.classList.contains("scene-on")); }
+      function live() { return !!(window.TRAINER && TRAINER.ready()); }
+      function glyph(ch) { return ch === " " ? "space" : ch === "\n" ? "newline" : ch; }
+
+      return {
+        sceneOn: sceneOn,
+        live: live,
+        busy: function () { return busy; },
+        a: function (say) {
+          if (!sceneOn() || !live()) { if (say) say("the live model or the 3D layer is off this visit"); return; }
+          TRAINER.probe("Yash").then(function (d) {
+            if (!d) { if (say) say("the model did not answer, try again"); return; }
+            runDemo("pass", 11, { inIdx: d.seedIdx || 0, probs: d.probs }, [
+              [0.02, "this is the network in your tab"],
+              [0.1, "one letter goes in: " + d.seed.slice(-1)],
+              [0.3, d.hidden + " units update their memory"],
+              [0.56, d.vocab + " scores come out, one per symbol"],
+              [0.78, "its guess for the next letter: " + glyph(d.next)]
+            ], function () {
+              if (say) say('after "' + esc(d.seed) + '" it expects "' + esc(glyph(d.next)) + '" (p=' + d.top[0][1].toFixed(2) + ")", "t-accent");
+            });
+          });
+        },
+        b: function (say) {
+          if (!sceneOn()) { if (say) say("the 3D layer is off on this visit"); return; }
+          var stb = live() ? TRAINER.state() : null;
+          var hid = stb ? (stb.tier === "A" ? 128 : stb.tier === "B" ? 96 : 64) : 128;
+          runDemo("shot", 9, null, [
+            [0.04, "characters in: one cell per symbol it can read"],
+            [0.36, "a recurrent block: " + hid + " units of memory"],
+            [0.66, "characters out: " + (stb ? stb.vocab : 79) + " scores, one per symbol"]
+          ], null);
+        },
+        c: function (say) {
+          if (!sceneOn()) { if (say) say("the 3D layer is off on this visit"); return; }
+          var stc = live() ? TRAINER.stats() : null;
+          runDemo("orbitBall", 9, null, stc && stc.step ? [
+            [0.04, "this is the model, walking the loss downhill"],
+            [0.35, "step " + stc.step.toLocaleString("en-US") + (stc.loss ? " · loss " + stc.loss.toFixed(3) : "")],
+            [0.68, Math.round(stc.trainedMs / 1000) + "s of your cpu so far"]
+          ] : [
+            [0.04, "this is the model's marker on the terrain"],
+            [0.4, "the lower it sits, the more it has learned"],
+            [0.72, "it rests at the bottom when training ends"]
+          ], null);
+        },
+        d: function (say) {
+          var std = live() ? TRAINER.stats() : null;
+          say("<span class='t-dim'>architecture</span>");
+          say("chars in [" + (std ? std.vocab : 79) + "] -> embed [32] -> gru [" + (std ? (std.tier === "A" ? 128 : std.tier === "B" ? 96 : 64) : 128) + "] -> chars out [" + (std ? std.vocab : 79) + "]");
+          if (!std) {
+            say("no live model this visit; those are the standard dimensions");
+            return;
+          }
+          say(std.params.toLocaleString("en-US") + " params · tier " + std.tier + " · step " + std.step.toLocaleString("en-US") + (std.loss ? " · loss " + std.loss.toFixed(3) : "") + " · " + Math.round(std.trainedMs / 1000) + "s of your cpu");
+          TRAINER.probe("Yash").then(function (d) {
+            if (!d) return;
+            say("<span class='t-dim'>next-char probe after \"Yash\"</span>");
+            d.top.forEach(function (t) {
+              var bar = "█".repeat(Math.max(1, Math.round(t[1] * 16)));
+              say(esc(glyph(t[0])) + "  <span class='p-bar'>" + bar + "</span> " + t[1].toFixed(2));
+            });
+          });
+        }
+      };
+    })();
+
     /* ---------- watch it learn: the training run, replayed by scroll ----------
        The section owns its final layout from first paint (placeholders, then
        data), because inserting 2300px of pin space after load shifts the page
@@ -1304,6 +1416,77 @@
       }
     }
 
+    /* ---------- the model dock: the loss widget opens the demos ---------- */
+
+    (function () {
+      var widget = document.querySelector(".loss-widget");
+      if (!widget || !isHome) return;
+      widget.removeAttribute("aria-hidden");
+      widget.setAttribute("role", "button");
+      widget.setAttribute("tabindex", "0");
+      widget.setAttribute("aria-label", "Meet the model");
+
+      var dock = document.createElement("div");
+      dock.className = "model-dock";
+      dock.innerHTML =
+        '<p class="dock-title">meet the model</p>' +
+        '<button type="button" data-demo="a">watch a letter travel through it</button>' +
+        '<button type="button" data-demo="b">see its architecture</button>' +
+        '<button type="button" data-demo="c">visit it on the terrain</button>' +
+        '<button type="button" data-demo="d">read its spec sheet</button>' +
+        '<div class="dock-spec" data-dock-spec hidden></div>';
+      document.body.appendChild(dock);
+      var spec = dock.querySelector("[data-dock-spec]");
+      var open = false;
+
+      function setOpen(v) {
+        open = v;
+        dock.classList.toggle("open", v);
+        if (!v) { spec.hidden = true; spec.innerHTML = ""; }
+      }
+
+      function specSay(html, cls) {
+        spec.hidden = false;
+        var div = document.createElement("div");
+        if (cls) div.className = cls;
+        div.innerHTML = html;
+        spec.appendChild(div);
+      }
+
+      function fire(which) {
+        if (DEMOS.busy()) { setOpen(true); spec.innerHTML = ""; specSay("one moment, a demo is already playing"); return; }
+        if (which === "d") { setOpen(true); spec.innerHTML = ""; DEMOS.d(specSay); return; }
+        if (!DEMOS.sceneOn() || (which === "a" && !DEMOS.live())) {
+          setOpen(true); spec.innerHTML = "";
+          specSay(!DEMOS.sceneOn() ? "the 3D layer is off on this visit; the spec sheet still works" : "no live model this visit; try the architecture instead");
+          return;
+        }
+        setOpen(false);
+        DEMOS[which]();
+      }
+
+      dock.addEventListener("click", function (e) {
+        var b = e.target.closest("button[data-demo]");
+        if (b) fire(b.getAttribute("data-demo"));
+      });
+      var toggleDock = function () { setOpen(!open); };
+      widget.addEventListener("click", toggleDock);
+      widget.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDock(); }
+      });
+      document.addEventListener("click", function (e) {
+        if (open && !dock.contains(e.target) && !widget.contains(e.target)) setOpen(false);
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && open) setOpen(false);
+      });
+
+      /* the replay finale invitation fires the same doors */
+      document.querySelectorAll("[data-learn-meet] button").forEach(function (b) {
+        b.addEventListener("click", function () { fire(b.getAttribute("data-demo")); });
+      });
+    })();
+
     /* ---------- crosshair ---------- */
 
     var hero = document.querySelector(".hero");
@@ -1501,53 +1684,12 @@
         }
       });
 
-      /* caption overlay + tween runner shared by the guided demos */
-      var capEl = null;
-      var capOn = function (text) {
-        if (!capEl) {
-          capEl = document.createElement("div");
-          capEl.className = "model-cap";
-          capEl.setAttribute("aria-hidden", "true");
-          document.body.appendChild(capEl);
-        }
-        if (text === null) { capEl.classList.remove("on"); return; }
-        capEl.textContent = text;
-        capEl.classList.add("on");
-      };
-
-      var demoBusy = false;
-      var runDemo = function (mode, secs, aux, caps, onDone) {
-        if (demoBusy) return;
-        demoBusy = true;
-        var st = { t: 0 };
-        var lastCap = -1;
-        gsap.to(st, {
-          t: 1, duration: secs, ease: "power1.inOut",
-          onUpdate: function () {
-            window.SCENE.demo(mode, Math.min(st.t, 0.999), aux);
-            for (var i = caps.length - 1; i >= 0; i--) {
-              if (st.t >= caps[i][0]) {
-                if (lastCap !== i) { lastCap = i; capOn(caps[i][1]); }
-                break;
-              }
-            }
-          },
-          onComplete: function () {
-            window.SCENE.demo(null, 1);
-            capOn(null);
-            demoBusy = false;
-            if (onDone) onDone();
-          }
-        });
-      };
-
       var CMDS = {
         help: function () {
           termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>model</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>grid</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
         },
         model: function (rest) {
           var v = (rest || "").trim().toLowerCase();
-          var sceneOn = window.SCENE && document.body.classList.contains("scene-on");
           if (!v) {
             termPrint("four ways to meet the model. pick one:", "t-accent");
             termPrint("<span class='t-good'>model a</span> <span class='t-dim'>watch one letter travel the network, a live forward pass</span>");
@@ -1556,76 +1698,15 @@
             termPrint("<span class='t-good'>model d</span> <span class='t-dim'>the spec sheet, right here in the terminal</span>");
             return;
           }
-          if ((v === "a" || v === "b" || v === "c") && !sceneOn) {
-            termPrint("the 3D layer is off on this visit; try <span class='t-good'>model d</span>");
-            return;
-          }
-          if (v === "a") {
-            if (!window.TRAINER || !TRAINER.ready()) {
-              termPrint("no live model this visit, so no forward pass; try <span class='t-good'>model b</span>");
-              return;
-            }
-            TRAINER.probe("Yash").then(function (d) {
-              if (!d) { termPrint("the model did not answer, try again"); return; }
-              closeTerm();
-              var g = d.next === " " ? "space" : d.next === "\n" ? "newline" : d.next;
-              runDemo("pass", 11, { inIdx: d.seedIdx || 0, probs: d.probs }, [
-                [0.02, "this is the network in your tab"],
-                [0.1, "one letter goes in: " + d.seed.slice(-1)],
-                [0.3, d.hidden + " units update their memory"],
-                [0.56, d.vocab + " scores come out, one per symbol"],
-                [0.78, "its guess for the next letter: " + g]
-              ], function () {
-                termPrint('after "' + esc(d.seed) + '" it expects "' + esc(g) + '" (p=' + d.top[0][1].toFixed(2) + ")", "t-accent");
-              });
-            });
-            return;
-          }
-          if (v === "b") {
-            var stb = window.TRAINER && TRAINER.ready() ? TRAINER.state() : null;
-            var hid = stb ? (stb.tier === "A" ? 128 : stb.tier === "B" ? 96 : 64) : 128;
+          if (v === "a" || v === "b" || v === "c") {
+            if (!DEMOS.sceneOn()) { termPrint("the 3D layer is off on this visit; try <span class='t-good'>model d</span>"); return; }
+            if (v === "a" && !DEMOS.live()) { termPrint("no live model this visit, so no forward pass; try <span class='t-good'>model b</span>"); return; }
+            if (DEMOS.busy()) { termPrint("a demo is already playing"); return; }
             closeTerm();
-            runDemo("shot", 9, null, [
-              [0.04, "characters in: one cell per symbol it can read"],
-              [0.36, "a recurrent block: " + hid + " units of memory"],
-              [0.66, "characters out: " + (stb ? stb.vocab : 79) + " scores, one per symbol"]
-            ], null);
+            DEMOS[v](termPrint);
             return;
           }
-          if (v === "c") {
-            closeTerm();
-            var stc = window.TRAINER && TRAINER.ready() ? TRAINER.stats() : null;
-            runDemo("orbitBall", 9, null, stc && stc.step ? [
-              [0.04, "this is the model, walking the loss downhill"],
-              [0.35, "step " + stc.step.toLocaleString("en-US") + (stc.loss ? " · loss " + stc.loss.toFixed(3) : "")],
-              [0.68, Math.round(stc.trainedMs / 1000) + "s of your cpu so far"]
-            ] : [
-              [0.04, "this is the model's marker on the terrain"],
-              [0.4, "the lower it sits, the more it has learned"],
-              [0.72, "it rests at the bottom when training ends"]
-            ], null);
-            return;
-          }
-          if (v === "d") {
-            var std = window.TRAINER && TRAINER.ready() ? TRAINER.stats() : null;
-            termPrint("<span class='t-dim'>architecture</span>");
-            termPrint("chars in [" + (std ? std.vocab : 79) + "] -> embed [32] -> gru [" + (std ? (std.tier === "A" ? 128 : std.tier === "B" ? 96 : 64) : 128) + "] -> chars out [" + (std ? std.vocab : 79) + "]");
-            if (!std) {
-              termPrint("no live model this visit; those are the standard dimensions");
-              return;
-            }
-            termPrint(std.params.toLocaleString("en-US") + " params · tier " + std.tier + " · step " + std.step.toLocaleString("en-US") + (std.loss ? " · loss " + std.loss.toFixed(3) : "") + " · " + Math.round(std.trainedMs / 1000) + "s of your cpu");
-            TRAINER.probe("Yash").then(function (d) {
-              if (!d) return;
-              termPrint("<span class='t-dim'>next-char probe after \"Yash\"</span>");
-              d.top.forEach(function (t) {
-                var gl = t[0] === " " ? "space" : t[0] === "\n" ? "newline" : t[0];
-                var bar = "█".repeat(Math.max(1, Math.round(t[1] * 16)));
-                termPrint(esc(gl) + "  <span class='p-bar'>" + bar + "</span> " + t[1].toFixed(2));
-              });
-            });
-            return;
-          }
+          if (v === "d") { DEMOS.d(termPrint); return; }
           termPrint("usage: model a | b | c | d");
         },
         fit: function (rest) {
