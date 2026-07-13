@@ -1178,7 +1178,7 @@
       /* the tip tracks one viewport line; higher on screen means the line
          arrives later and follows the eye instead of leading it */
       ScrollTrigger.create({
-        trigger: xpEl, start: "top 62%", end: "bottom 62%", scrub: 0.4,
+        trigger: xpEl, start: "top 67%", end: "bottom 67%", scrub: 0.4,
         onUpdate: function (self) {
           xpEl.style.setProperty("--axis", self.progress.toFixed(4));
         }
