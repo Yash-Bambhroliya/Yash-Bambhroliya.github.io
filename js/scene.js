@@ -15,6 +15,8 @@ import * as THREE from "../vendor/three.module.min.js";
     training: 0, trainingShown: 0,
     interlude: 0, recede: 0,
     journey: 0, journeyShown: 0, lookBack: 0, lookShown: 0,
+    demo: { mode: null, t: 0, aux: null },
+    netPts: {},
     mouse: { x: 0, y: 0, on: false, sx: 0, sy: 0 },
     ball: null, ballGlow: null, trail: null, trailPts: [],
     terrain: null, terrainWire: null, net: null, pulseMats: [],
@@ -156,18 +158,24 @@ import * as THREE from "../vendor/three.module.min.js";
 
   function buildNet(dims) {
     var group = new THREE.Group();
+    S.netPts = {};
     var accent = cssColor("--accent"), ink = cssColor("--ink-2");
     var mats = [];
 
-    function pointsLayer(positions, size, color) {
+    function pointsLayer(positions, size, color, key) {
       var geo = new THREE.BufferGeometry();
       geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      var n = positions.length / 3;
+      var cols = new Float32Array(n * 3);
+      for (var ci = 0; ci < n * 3; ci++) cols[ci] = 0.62;
+      geo.setAttribute("color", new THREE.BufferAttribute(cols, 3));
       var m = new THREE.PointsMaterial({
-        color: color, size: size, map: glowTexture(),
-        transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending,
+        color: color, size: size, map: glowTexture(), vertexColors: true,
+        transparent: true, opacity: 1, blending: THREE.AdditiveBlending,
         depthWrite: false, sizeAttenuation: true
       });
       mats.push(m);
+      if (key) S.netPts[key] = { geo: geo, n: n };
       return new THREE.Points(geo, m);
     }
 
@@ -178,7 +186,7 @@ import * as THREE from "../vendor/three.module.min.js";
       inPos[i * 3] = gx * 3.2; inPos[i * 3 + 1] = gy * 3.2; inPos[i * 3 + 2] = 0;
       inPts.push(new THREE.Vector3(gx * 3.2, gy * 3.2, 0));
     }
-    group.add(pointsLayer(inPos, 2.2, ink));
+    group.add(pointsLayer(inPos, 2.2, ink, "in"));
 
     /* hidden: a double ring, the recurrent block */
     var hidN = dims && dims.hidden || 128;
@@ -190,7 +198,7 @@ import * as THREE from "../vendor/three.module.min.js";
       hidPos[i * 3] = v.x; hidPos[i * 3 + 1] = v.y; hidPos[i * 3 + 2] = v.z;
       hidPts.push(v);
     }
-    group.add(pointsLayer(hidPos, 2.8, accent));
+    group.add(pointsLayer(hidPos, 2.8, accent, "hid"));
 
     /* output: vocab column */
     var outN = dims && dims.vocab || 79;
@@ -201,7 +209,7 @@ import * as THREE from "../vendor/three.module.min.js";
       outPos[i * 3] = ov.x; outPos[i * 3 + 1] = ov.y; outPos[i * 3 + 2] = ov.z;
       outPts.push(ov);
     }
-    group.add(pointsLayer(outPos, 2.2, ink));
+    group.add(pointsLayer(outPos, 2.2, ink, "out"));
 
     /* connections: sampled, additive, pulsing */
     function wires(fromPts, toPts, count, opacity) {
@@ -245,6 +253,68 @@ import * as THREE from "../vendor/three.module.min.js";
     ]);
   }
 
+  /* ---------- guided demos: light the layers, stage the camera ---------- */
+
+  function setLayer(key, fn) {
+    var L = S.netPts[key];
+    if (!L) return;
+    var att = L.geo.attributes.color;
+    for (var i = 0; i < L.n; i++) {
+      var v = Math.max(0.06, Math.min(1, fn(i)));
+      att.setXYZ(i, v, v, v);
+    }
+    att.needsUpdate = true;
+  }
+
+  function resetLayers() {
+    ["in", "hid", "out"].forEach(function (k) {
+      setLayer(k, function () { return 0.62; });
+    });
+  }
+
+  /* a soft window: 1 inside [a,b], eased at both edges */
+  function win(t, a, b, e) {
+    e = e || 0.06;
+    return clamp01((t - a) / e) * clamp01((b - t) / e);
+  }
+
+  function applyPass(t, aux) {
+    var inLit = win(t, 0.1, 0.52);
+    setLayer("in", function (i) {
+      return 0.28 + (aux && i === aux.inIdx ? inLit * 0.72 : 0);
+    });
+    var flare = win(t, 0.3, 0.62);
+    setLayer("hid", function (i) {
+      var ripple = Math.sin(i * 0.7 + t * 40) * 0.12;
+      return 0.3 + flare * (0.55 + ripple);
+    });
+    var outLit = win(t, 0.58, 0.97);
+    var probs = aux && aux.probs;
+    var mx = aux && aux.maxProb || 1;
+    setLayer("out", function (i) {
+      var p = probs ? probs[i] / mx : 0;
+      return 0.24 + outLit * p * 0.76;
+    });
+    /* wires hand the pulse forward */
+    if (S.pulseMats.length >= 3) {
+      S.pulseMats[0].opacity = 0.08 + win(t, 0.18, 0.4) * 0.4;
+      S.pulseMats[1].opacity = 0.1 + win(t, 0.3, 0.58) * 0.45;
+      S.pulseMats[2].opacity = 0.08 + win(t, 0.5, 0.75) * 0.4;
+    }
+  }
+
+  function applyShot(t) {
+    var third = function (i) { return win(t, 0.08 + i * 0.28, 0.34 + i * 0.28); };
+    setLayer("in", function () { return 0.4 + third(0) * 0.6; });
+    setLayer("hid", function () { return 0.4 + third(1) * 0.6; });
+    setLayer("out", function () { return 0.4 + third(2) * 0.6; });
+    if (S.pulseMats.length >= 3) {
+      S.pulseMats[0].opacity = 0.08 + third(0) * 0.3;
+      S.pulseMats[1].opacity = 0.1 + third(1) * 0.35;
+      S.pulseMats[2].opacity = 0.08 + third(2) * 0.3;
+    }
+  }
+
   function loop(now) {
     S.raf = requestAnimationFrame(loop);
     var t = (now - S.t0) / 1000;
@@ -277,7 +347,8 @@ import * as THREE from "../vendor/three.module.min.js";
 
     /* the network exists only inside the fly-through; idling in the fog it
        reads as an artifact, worst on the light theme */
-    var netOn = S.interlude > 0.001;
+    var demoNet = S.demo.mode === "pass" || S.demo.mode === "shot";
+    var netOn = S.interlude > 0.001 || demoNet;
     if (S.net) {
       S.net.visible = netOn;
       if (netOn) {
@@ -325,6 +396,34 @@ import * as THREE from "../vendor/three.module.min.js";
       var lk = HERO_LOOK.clone().lerp(pathLook, w);
       pos.x += rx * (7 - 4.5 * w);
       pos.y -= ry * (4 - 2.5 * w);
+
+      /* guided demos borrow the camera and hand it back */
+      if (S.demo.mode) {
+        var dt = S.demo.t;
+        var dw = smoothstep(Math.min(dt / 0.12, (1 - dt) / 0.1, 1));
+        var dPos = null, dLook = null;
+        var n = S.net.position;
+        if (S.demo.mode === "pass") {
+          dPos = new THREE.Vector3(n.x - 150, n.y + 12, n.z + 42);
+          dLook = new THREE.Vector3(n.x, n.y, n.z + 42);
+          applyPass(dt, S.demo.aux);
+        } else if (S.demo.mode === "shot") {
+          var sa = -0.4 + dt * 0.55;
+          dPos = new THREE.Vector3(n.x + Math.sin(sa) * 165, n.y + 20 + dt * 10, n.z + 42 + Math.cos(sa) * 165);
+          dLook = new THREE.Vector3(n.x, n.y, n.z + 42);
+          applyShot(dt);
+        } else if (S.demo.mode === "orbitBall") {
+          var bp2 = ballPos(Math.min(0.999, S.trainingShown));
+          var oa = dt * Math.PI * 2;
+          dPos = new THREE.Vector3(bp2.x + Math.sin(oa) * 20, bp2.y + 9, bp2.z + Math.cos(oa) * 20);
+          dLook = bp2;
+        }
+        if (dPos) {
+          pos.lerp(dPos, dw);
+          lk.lerp(dLook, dw);
+        }
+      }
+
       cam.position.copy(pos);
       cam.lookAt(lk);
     }
@@ -392,6 +491,24 @@ import * as THREE from "../vendor/three.module.min.js";
       S.lookBack = Math.max(0, Math.min(1, lookBack || 0));
     },
     setRecede: function (r) { S.recede = Math.max(0, Math.min(1, r)); },
+    /* guided demos for the terminal: mode pass | shot | orbitBall, t 0..1 */
+    demo: function (mode, t, aux) {
+      if (!S.ready) return;
+      if (!mode || t >= 1) {
+        S.demo.mode = null;
+        S.demo.aux = null;
+        resetLayers();
+        return;
+      }
+      if (aux && aux.probs && !aux.maxProb) {
+        var mp = 0;
+        for (var i = 0; i < aux.probs.length; i++) if (aux.probs[i] > mp) mp = aux.probs[i];
+        aux.maxProb = mp || 1;
+      }
+      S.demo.mode = mode;
+      S.demo.t = t;
+      if (aux) S.demo.aux = aux;
+    },
     setPointer: function (x, y, on) {
       S.mouse.on = on;
       S.mouse.x = (x / window.innerWidth - 0.5) * 2;

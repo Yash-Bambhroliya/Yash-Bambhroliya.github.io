@@ -2149,6 +2149,33 @@ html.js[data-theme="light"] .card {
   html.js, html.js a, html.js button { cursor: auto; }
 }
 
+/* ---------- guided demo captions ---------- */
+
+.model-cap {
+  position: fixed;
+  bottom: 3.6rem;
+  left: 50%;
+  transform: translate(-50%, 8px);
+  z-index: 150;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0.55rem 1.2rem;
+  max-width: min(88vw, 34rem);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+  box-shadow: var(--elev-1);
+}
+
+.model-cap.on { opacity: 1; transform: translate(-50%, 0); }
+
 /* ---------- the construction toggle (press g) ---------- */
 
 .drawing {

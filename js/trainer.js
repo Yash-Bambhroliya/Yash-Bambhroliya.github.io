@@ -156,6 +156,9 @@
     } else if (d.type === "sampled") {
       var cb = pendingSamples[d.reqId];
       if (cb) { delete pendingSamples[d.reqId]; cb(d.text); }
+    } else if (d.type === "probe") {
+      var pcb = pendingSamples[d.reqId];
+      if (pcb) { delete pendingSamples[d.reqId]; pcb(d); }
     } else if (d.type === "weights") {
       idbPut("gru-v1:" + state.corpusHash, { weights: d.buffer, meta: d.meta, savedAt: Date.now() });
     } else if (d.type === "gradcheck") {
@@ -202,6 +205,17 @@
         var id = ++reqId;
         pendingSamples[id] = resolve;
         worker.postMessage({ type: "sample", n: n || 160, seed: seed, reqId: id });
+        setTimeout(function () {
+          if (pendingSamples[id]) { delete pendingSamples[id]; resolve(null); }
+        }, 4000);
+      });
+    },
+    probe: function (seed) {
+      return new Promise(function (resolve) {
+        if (!worker || !state.ready) { resolve(null); return; }
+        var id = ++reqId;
+        pendingSamples[id] = resolve;
+        worker.postMessage({ type: "probe", seed: seed, reqId: id });
         setTimeout(function () {
           if (pendingSamples[id]) { delete pendingSamples[id]; resolve(null); }
         }, 4000);

@@ -611,6 +611,34 @@ onmessage = function (e) {
   } else if (d.type === "sample") {
     if (!M) return;
     postMessage({ type: "sampled", text: sampleText(M.model, d.n || 160, RUN.temp, d.seed), reqId: d.reqId });
+  } else if (d.type === "probe") {
+    /* one real forward pass for the demo: feed a seed, return the full
+       next-char distribution in vocab order plus the top candidates */
+    if (!M) return;
+    var seed = (d.seed || "Yash").slice(-40);
+    var ph = new Float32Array(M.H);
+    var pl = M.infLogits;
+    for (var pi = 0; pi < seed.length; pi++) {
+      var pid = M.stoi[seed[pi]] !== undefined ? M.stoi[seed[pi]] : 0;
+      forwardChar(M.model, pid, ph, pi === seed.length - 1 ? pl : null);
+    }
+    var lastIdx = M.stoi[seed[seed.length - 1]] !== undefined ? M.stoi[seed[seed.length - 1]] : 0;
+    var pmx = -1e30;
+    for (var pq = 0; pq < M.V; pq++) if (pl[pq] > pmx) pmx = pl[pq];
+    var psum = 0, probs = new Array(M.V);
+    for (pq = 0; pq < M.V; pq++) { probs[pq] = Math.exp(pl[pq] - pmx); psum += probs[pq]; }
+    var ptop = [];
+    for (pq = 0; pq < M.V; pq++) {
+      probs[pq] /= psum;
+      ptop.push([M.itos[pq], probs[pq]]);
+    }
+    ptop.sort(function (a, b) { return b[1] - a[1]; });
+    postMessage({
+      type: "probe", reqId: d.reqId,
+      seed: seed, probs: probs, seedIdx: lastIdx,
+      next: ptop[0][0], top: ptop.slice(0, 5),
+      hidden: M.H, vocab: M.V
+    });
   } else if (d.type === "headline") {
     if (!M) return;
     var hl = headline(M.model, HEADLINE, RUN.temp);
