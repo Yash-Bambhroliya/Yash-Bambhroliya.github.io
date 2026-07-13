@@ -2115,24 +2115,25 @@ html:not(.js) .tok { visibility: visible; }
   color: var(--ink-3);
 }
 
-/* ---------- the drafting cursor ----------
-   The OS arrow, redrawn: angular silhouette, inked fill with a paper
-   outline so it reads on any surface. Interactive targets get the same
-   arrow carrying a registration plus. Data URIs because cursors cannot
-   read custom properties; each theme ships its own pair. */
+/* ---------- the registration crosshair cursor ----------
+   The site's survey mark in your hand: fine dual-outlined ticks with an
+   open center, pointing from its middle. Over anything interactive the
+   ring closes around the dot. Ink on dark, drafting ink on paper; data
+   URIs because cursors cannot read custom properties. Text fields keep
+   the native I-beam and touch devices are untouched. */
 
 html.js {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 2L4 20.5L9.3 16L12.6 23.4L15.9 21.9L12.7 14.7L20 14.2Z' fill='%23f2f3ee' stroke='%230b0c10' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 4 2, default;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2726%27 height=%2726%27 viewBox=%270 0 26 26%27%3E%3Cg stroke=%27%230b0c10%27 stroke-width=%273.4%27%3E%3Cpath d=%27M13 3v6M13 17v6M3 13h6M17 13h6%27/%3E%3C/g%3E%3Cg stroke=%27%23f2f3ee%27 stroke-width=%271.4%27%3E%3Cpath d=%27M13 3v6M13 17v6M3 13h6M17 13h6%27/%3E%3C/g%3E%3Ccircle cx=%2713%27 cy=%2713%27 r=%271.7%27 fill=%27%23f2f3ee%27 stroke=%27%230b0c10%27 stroke-width=%271%27/%3E%3C/svg%3E") 13 13, default;
 }
 
 html.js a, html.js button, html.js [role="button"], html.js summary,
 html.js select, html.js .lp, html.js .chip, html.js .jd-tab,
 html.js .jd-toggle, html.js .work-row, html.js .card {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='27' height='27' viewBox='0 0 27 27'%3E%3Cpath d='M4 2L4 20.5L9.3 16L12.6 23.4L15.9 21.9L12.7 14.7L20 14.2Z' fill='%23f2f3ee' stroke='%230b0c10' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M18.5 21.5h7M22 18v7' stroke='%230b0c10' stroke-width='3.2'/%3E%3Cpath d='M18.5 21.5h7M22 18v7' stroke='%23f2f3ee' stroke-width='1.4'/%3E%3C/svg%3E") 4 2, pointer;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2726%27 height=%2726%27 viewBox=%270 0 26 26%27%3E%3Cg stroke=%27%230b0c10%27 stroke-width=%273.4%27%3E%3Cpath d=%27M13 2v4M13 20v4M2 13h4M20 13h4%27/%3E%3Ccircle cx=%2713%27 cy=%2713%27 r=%275.2%27 fill=%27none%27/%3E%3C/g%3E%3Cg stroke=%27%23f2f3ee%27 stroke-width=%271.4%27%3E%3Cpath d=%27M13 2v4M13 20v4M2 13h4M20 13h4%27/%3E%3Ccircle cx=%2713%27 cy=%2713%27 r=%275.2%27 fill=%27none%27/%3E%3C/g%3E%3Ccircle cx=%2713%27 cy=%2713%27 r=%272%27 fill=%27%23f2f3ee%27/%3E%3C/svg%3E") 13 13, pointer;
 }
 
 html.js[data-theme="light"] {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 2L4 20.5L9.3 16L12.6 23.4L15.9 21.9L12.7 14.7L20 14.2Z' fill='%231c1913' stroke='%23f7f4ed' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 4 2, default;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2726%27 height=%2726%27 viewBox=%270 0 26 26%27%3E%3Cg stroke=%27%23f7f4ed%27 stroke-width=%273.4%27%3E%3Cpath d=%27M13 3v6M13 17v6M3 13h6M17 13h6%27/%3E%3C/g%3E%3Cg stroke=%27%231c1913%27 stroke-width=%271.4%27%3E%3Cpath d=%27M13 3v6M13 17v6M3 13h6M17 13h6%27/%3E%3C/g%3E%3Ccircle cx=%2713%27 cy=%2713%27 r=%271.7%27 fill=%27%231c1913%27 stroke=%27%23f7f4ed%27 stroke-width=%271%27/%3E%3C/svg%3E") 13 13, default;
 }
 
 html.js[data-theme="light"] a, html.js[data-theme="light"] button,
@@ -2141,7 +2142,7 @@ html.js[data-theme="light"] select, html.js[data-theme="light"] .lp,
 html.js[data-theme="light"] .chip, html.js[data-theme="light"] .jd-tab,
 html.js[data-theme="light"] .jd-toggle, html.js[data-theme="light"] .work-row,
 html.js[data-theme="light"] .card {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='27' height='27' viewBox='0 0 27 27'%3E%3Cpath d='M4 2L4 20.5L9.3 16L12.6 23.4L15.9 21.9L12.7 14.7L20 14.2Z' fill='%231c1913' stroke='%23f7f4ed' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M18.5 21.5h7M22 18v7' stroke='%23f7f4ed' stroke-width='3.2'/%3E%3Cpath d='M18.5 21.5h7M22 18v7' stroke='%231c1913' stroke-width='1.4'/%3E%3C/svg%3E") 4 2, pointer;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2726%27 height=%2726%27 viewBox=%270 0 26 26%27%3E%3Cg stroke=%27%23f7f4ed%27 stroke-width=%273.4%27%3E%3Cpath d=%27M13 2v4M13 20v4M2 13h4M20 13h4%27/%3E%3Ccircle cx=%2713%27 cy=%2713%27 r=%275.2%27 fill=%27none%27/%3E%3C/g%3E%3Cg stroke=%27%231c1913%27 stroke-width=%271.4%27%3E%3Cpath d=%27M13 2v4M13 20v4M2 13h4M20 13h4%27/%3E%3Ccircle cx=%2713%27 cy=%2713%27 r=%275.2%27 fill=%27none%27/%3E%3C/g%3E%3Ccircle cx=%2713%27 cy=%2713%27 r=%272%27 fill=%27%231c1913%27/%3E%3C/svg%3E") 13 13, pointer;
 }
 
 @media (pointer: coarse) {
