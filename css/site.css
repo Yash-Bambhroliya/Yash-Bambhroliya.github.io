@@ -2149,6 +2149,25 @@ html.js[data-theme="light"] .card {
   html.js, html.js a, html.js button { cursor: auto; }
 }
 
+/* ---------- the demo curtain: the page steps aside for the stage ---------- */
+
+main, footer, .nav, .loss-widget, .shared-banner {
+  transition: opacity 650ms var(--ease-out);
+}
+
+body.demo-on main,
+body.demo-on footer {
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+body.demo-on .nav { opacity: 0.15; pointer-events: none; }
+body.demo-on .loss-widget,
+body.demo-on .model-dock,
+body.demo-on .shared-banner,
+body.demo-on .halo,
+body.demo-on .thread { opacity: 0; }
+
 /* ---------- guided demo captions ---------- */
 
 .model-cap {

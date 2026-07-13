@@ -675,7 +675,30 @@
         busy = true;
         var st = { t: 0 };
         var lastCap = -1;
-        gsap.to(st, {
+
+        /* the curtain: the page steps aside so the stage owns the screen */
+        body.classList.add("demo-on");
+        var tween = null;
+        var cancels = ["wheel", "touchstart", "pointerdown"];
+        function finish(cancelled) {
+          cancels.forEach(function (ev) { window.removeEventListener(ev, cancel); });
+          document.removeEventListener("keydown", cancel);
+          if (tween) tween.kill();
+          window.SCENE.demo(null, 1);
+          capOn(null);
+          body.classList.remove("demo-on");
+          busy = false;
+          if (!cancelled && onDone) onDone();
+        }
+        function cancel() { if (busy) finish(true); }
+        /* armed a beat later so the launching click cannot cancel it */
+        setTimeout(function () {
+          if (!busy) return;
+          cancels.forEach(function (ev) { window.addEventListener(ev, cancel, { passive: true }); });
+          document.addEventListener("keydown", cancel);
+        }, 500);
+
+        tween = gsap.to(st, {
           t: 1, duration: secs, ease: "power1.inOut",
           onUpdate: function () {
             window.SCENE.demo(mode, Math.min(st.t, 0.999), aux);
@@ -686,12 +709,7 @@
               }
             }
           },
-          onComplete: function () {
-            window.SCENE.demo(null, 1);
-            capOn(null);
-            busy = false;
-            if (onDone) onDone();
-          }
+          onComplete: function () { finish(false); }
         });
       }
 
