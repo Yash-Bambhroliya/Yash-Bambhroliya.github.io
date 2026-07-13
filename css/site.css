@@ -2183,8 +2183,8 @@ body[data-page="case"] .viz-title::before {
   .work-row { grid-template-columns: 1fr; padding-block: 2rem; }
   .work-row:nth-child(even) { grid-template-columns: 1fr; }
   .work-row .num { font-size: 2.6rem; -webkit-text-stroke-width: 1px; }
-  .work-row:nth-child(even) .num { grid-column: 1; text-align: left; }
-  .work-row:nth-child(even) > span:not(.num):not(.meta):not(.ghost) { grid-column: 1; }
+  .work-row:nth-child(even) .num { grid-column: auto; grid-row: auto; text-align: left; }
+  .work-row:nth-child(even) > span:not(.num):not(.meta):not(.ghost) { grid-column: auto; grid-row: auto; }
   .work-row .meta { writing-mode: horizontal-tb; padding-top: 0; }
   .work-row::after { display: none; }
   .skills dl { grid-template-columns: 1fr; }
