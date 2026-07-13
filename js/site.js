@@ -1540,7 +1540,12 @@
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleDock(); }
       });
       document.addEventListener("click", function (e) {
-        if (open && !dock.contains(e.target) && !widget.contains(e.target)) setOpen(false);
+        if (!open) return;
+        /* the click that just opened the dock from an invitation chip must
+           not also close it on the way up */
+        if (dock.contains(e.target) || widget.contains(e.target)) return;
+        if (e.target.closest && e.target.closest("[data-learn-meet]")) return;
+        setOpen(false);
       });
       document.addEventListener("keydown", function (e) {
         if (e.key === "Escape" && open) setOpen(false);
