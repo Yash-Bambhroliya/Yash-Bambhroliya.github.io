@@ -2115,6 +2115,39 @@ html:not(.js) .tok { visibility: visible; }
   color: var(--ink-3);
 }
 
+/* ---------- the drafting cursor ----------
+   The OS arrow, redrawn: angular silhouette, inked fill with a paper
+   outline so it reads on any surface. Interactive targets get the same
+   arrow carrying a registration plus. Data URIs because cursors cannot
+   read custom properties; each theme ships its own pair. */
+
+html.js {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 2L4 20.5L9.3 16L12.6 23.4L15.9 21.9L12.7 14.7L20 14.2Z' fill='%23f2f3ee' stroke='%230b0c10' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 4 2, default;
+}
+
+html.js a, html.js button, html.js [role="button"], html.js summary,
+html.js select, html.js .lp, html.js .chip, html.js .jd-tab,
+html.js .jd-toggle, html.js .work-row, html.js .card {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='27' height='27' viewBox='0 0 27 27'%3E%3Cpath d='M4 2L4 20.5L9.3 16L12.6 23.4L15.9 21.9L12.7 14.7L20 14.2Z' fill='%23f2f3ee' stroke='%230b0c10' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M18.5 21.5h7M22 18v7' stroke='%230b0c10' stroke-width='3.2'/%3E%3Cpath d='M18.5 21.5h7M22 18v7' stroke='%23f2f3ee' stroke-width='1.4'/%3E%3C/svg%3E") 4 2, pointer;
+}
+
+html.js[data-theme="light"] {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26'%3E%3Cpath d='M4 2L4 20.5L9.3 16L12.6 23.4L15.9 21.9L12.7 14.7L20 14.2Z' fill='%231c1913' stroke='%23f7f4ed' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") 4 2, default;
+}
+
+html.js[data-theme="light"] a, html.js[data-theme="light"] button,
+html.js[data-theme="light"] [role="button"], html.js[data-theme="light"] summary,
+html.js[data-theme="light"] select, html.js[data-theme="light"] .lp,
+html.js[data-theme="light"] .chip, html.js[data-theme="light"] .jd-tab,
+html.js[data-theme="light"] .jd-toggle, html.js[data-theme="light"] .work-row,
+html.js[data-theme="light"] .card {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='27' height='27' viewBox='0 0 27 27'%3E%3Cpath d='M4 2L4 20.5L9.3 16L12.6 23.4L15.9 21.9L12.7 14.7L20 14.2Z' fill='%231c1913' stroke='%23f7f4ed' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M18.5 21.5h7M22 18v7' stroke='%23f7f4ed' stroke-width='3.2'/%3E%3Cpath d='M18.5 21.5h7M22 18v7' stroke='%231c1913' stroke-width='1.4'/%3E%3C/svg%3E") 4 2, pointer;
+}
+
+@media (pointer: coarse) {
+  html.js, html.js a, html.js button { cursor: auto; }
+}
+
 /* ---------- the construction toggle (press g) ---------- */
 
 .drawing {
