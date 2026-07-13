@@ -1568,9 +1568,10 @@
           termPrint("AI engineer in Gujarat, India. I fine-tune, quantize, serve, and evaluate LLMs in production. Currently at Nextbase Solutions.");
         },
         work: function () {
-          termPrint('01 MathTutor-Qwen3-8B <span class="t-dim">fine-tune + LLM-as-judge eval</span> <a href="/work/mathtutor.html">/work/mathtutor</a>');
-          termPrint('02 HGD Memory Engine <span class="t-dim">retrieval benchmark, 40% to 85%</span> <a href="/work/hgd-eval.html">/work/hgd-eval</a>');
-          termPrint('03 Rhizome Logic <span class="t-dim">competitive-intelligence agent</span> <a href="/work/rhizome.html">/work/rhizome</a>');
+          termPrint('01 innerlens <span class="t-dim">hallucination signal from model internals, AUROC 0.80</span> <a href="/work/innerlens.html">/work/innerlens</a>');
+          termPrint('02 MathTutor-Qwen3-8B <span class="t-dim">fine-tune + LLM-as-judge eval</span> <a href="/work/mathtutor.html">/work/mathtutor</a>');
+          termPrint('03 HGD Memory Engine <span class="t-dim">retrieval benchmark, 40% to 85%</span> <a href="/work/hgd-eval.html">/work/hgd-eval</a>');
+          termPrint('04 Rhizome Logic <span class="t-dim">competitive-intelligence agent</span> <a href="/work/rhizome.html">/work/rhizome</a>');
         },
         evals: function () {
           termPrint("<span class='t-dim'>MathTutor FT-2 vs base Qwen3-8B (judge: Claude Sonnet 4, corrected)</span>");

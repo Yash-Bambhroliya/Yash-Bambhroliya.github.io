@@ -59,6 +59,7 @@
       var list = document.querySelector(".work-list");
       if (!list) return;
       var rows = {
+        "innerlens": document.getElementById("row-innerlens"),
         "mathtutor": document.getElementById("row-mathtutor"),
         "hgd-eval": document.getElementById("row-hgd"),
         "rhizome": document.getElementById("row-rhizome")

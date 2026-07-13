@@ -91,10 +91,11 @@ function mockReport() {
       { name: "LLM fine-tuning", score: 4, evidence: "Fine-tuned Qwen3-8B with QLoRA and published the model and eval [mathtutor-ft, mathtutor-eval].", claim_ids: ["mathtutor-ft", "mathtutor-eval"], honest_gaps: "single-GPU scale only, no multi-node training" },
       { name: "Inference serving", score: 4, evidence: "AWQ-quantized model served on vLLM with measured speedups [awq-vllm].", claim_ids: ["awq-vllm"], honest_gaps: "no Kubernetes in production" },
       { name: "Evaluation", score: 5, evidence: "Built LLM-as-judge pipeline, caught judge bias, benchmarked a retrieval engine across 6 versions [mathtutor-eval, hgd-eval].", claim_ids: ["mathtutor-eval", "hgd-eval"], honest_gaps: "no formal publications" },
+      { name: "Interpretability", score: 4, evidence: "Shipped innerlens, a hallucination-detection runtime reading model internals, validated at AUROC 0.80 [innerlens, innerlens-eval].", claim_ids: ["innerlens", "innerlens-eval"], honest_gaps: "one model and one dataset so far" },
       { name: "Agents", score: 4, evidence: "Built a scheduled multi-agent intelligence system with human verification [rhizome, agents-work].", claim_ids: ["rhizome", "agents-work"], honest_gaps: "agent work is small-team scale" }
     ],
     tailored_hero_line: "AI engineer who fine-tunes, serves, and honestly evaluates LLMs in production.",
-    reordered_case_studies: ["mathtutor", "hgd-eval", "rhizome"],
+    reordered_case_studies: ["innerlens", "mathtutor", "hgd-eval", "rhizome"],
     role_label: "Senior ML Engineer"
   };
 }

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-07-12",
+  "updated": "2026-07-13",
   "identity": {
     "name": "Yash Bambhroliya",
     "role": "AI Engineer",
@@ -14,6 +14,28 @@
   },
   "claims": [
     {
+      "id": "innerlens",
+      "topic": "interpretability",
+      "text": "Built and open-sourced innerlens, a hallucination-detection runtime on Anthropic's Jacobian-lens interpretability research: reads a model's own late-layer activations per generated token and scores internal support for what it emitted, in a single forward pass with no second model or retrieval; shipped as a drop-in OpenAI-compatible server on PyPI within a day of the research release",
+      "metrics": [],
+      "source": "/work/innerlens",
+      "confidence": "public on GitHub and PyPI, Apache-2.0"
+    },
+    {
+      "id": "innerlens-eval",
+      "topic": "evaluation",
+      "text": "Validated the innerlens hallucination signal on TriviaQA (200 questions, Qwen3.5-4B, H100): internal confidence predicts answer correctness at AUROC 0.80 through the shipped library's own scoring; internal support collapses from 0.99 on known facts to 0.19 on forced fabrications",
+      "metrics": [
+        {
+          "name": "hallucination AUROC",
+          "from": "chance 0.50",
+          "to": "0.80"
+        }
+      ],
+      "source": "/work/innerlens",
+      "confidence": "reproducible from eval script in the public repo"
+    },
+    {
       "id": "mathtutor-ft",
       "topic": "fine-tuning",
       "text": "Fine-tuned Qwen3-8B into a K-12 math tutor with QLoRA across two training rounds (612 curated examples, NEFTune); published the model on Hugging Face",
@@ -26,8 +48,16 @@
       "topic": "evaluation",
       "text": "Built an LLM-as-judge evaluation pipeline (Claude Sonnet 4, 50 held-out prompts, 5 criteria); found and corrected judge bias by splitting metrics by domain; fine-tune beat base on all 5 metrics",
       "metrics": [
-        { "name": "refusal (OOD)", "from": 3.14, "to": 4.12 },
-        { "name": "faithfulness", "from": 4.62, "to": 4.8 }
+        {
+          "name": "refusal (OOD)",
+          "from": 3.14,
+          "to": 4.12
+        },
+        {
+          "name": "faithfulness",
+          "from": 4.62,
+          "to": 4.8
+        }
       ],
       "source": "/work/mathtutor",
       "confidence": "eval code public on GitHub"
@@ -44,7 +74,13 @@
       "id": "engagement",
       "topic": "product impact",
       "text": "Raised average engagement time per active user by 122% (11m 32s to 25m 35s in three weeks, Firebase Analytics) via a domain-tuned conversational model with persona-conditioned prompts",
-      "metrics": [{ "name": "avg engagement", "from": "11m32s", "to": "25m35s" }],
+      "metrics": [
+        {
+          "name": "avg engagement",
+          "from": "11m32s",
+          "to": "25m35s"
+        }
+      ],
       "source": "/#experience",
       "confidence": "self-reported, Firebase Analytics"
     },
@@ -68,7 +104,13 @@
       "id": "hgd-eval",
       "topic": "evaluation",
       "text": "Benchmarked an agent memory-retrieval engine across 6 versions (20-query, 8-category benchmark over a 129K-token corpus): recall 40% to 85%, context tokens down 78-93%; ran ablations showing hashed vectors matched transformer embeddings at 30x faster indexing; contributed the subject-coverage confidence fix (80% to 85%)",
-      "metrics": [{ "name": "recall", "from": "40%", "to": "85%" }],
+      "metrics": [
+        {
+          "name": "recall",
+          "from": "40%",
+          "to": "85%"
+        }
+      ],
       "source": "/work/hgd-eval",
       "confidence": "engine built by a colleague; benchmark, ablations, and fix are Yash's; code private"
     },
@@ -106,26 +148,125 @@
     }
   ],
   "skills": [
-    { "name": "QLoRA / PEFT fine-tuning", "level": "shipped", "claim_ids": ["mathtutor-ft"] },
-    { "name": "LLM evaluation, LLM-as-judge", "level": "shipped", "claim_ids": ["mathtutor-eval", "hgd-eval"] },
-    { "name": "vLLM / AWQ serving", "level": "production", "claim_ids": ["awq-vllm"] },
-    { "name": "AI agents", "level": "production", "claim_ids": ["rhizome", "agents-work"] },
-    { "name": "RAG / retrieval", "level": "production", "claim_ids": ["agents-work", "hgd-eval"] },
-    { "name": "Diffusion media (Flux, Wan, ComfyUI)", "level": "production", "claim_ids": ["media-suite"] },
-    { "name": "Python, PyTorch, scikit-learn", "level": "daily", "claim_ids": ["mathtutor-ft", "cv-robotics"] },
-    { "name": "TypeScript, Node.js, Next.js, FastAPI", "level": "daily", "claim_ids": ["llm-gateway"] },
-    { "name": "AWS, GCP, Azure, RunPod, Docker", "level": "production", "claim_ids": ["media-suite", "awq-vllm"] }
+    {
+      "name": "QLoRA / PEFT fine-tuning",
+      "level": "shipped",
+      "claim_ids": [
+        "mathtutor-ft"
+      ]
+    },
+    {
+      "name": "Interpretability (Jacobian lens)",
+      "level": "shipped",
+      "claim_ids": [
+        "innerlens",
+        "innerlens-eval"
+      ]
+    },
+    {
+      "name": "LLM evaluation, LLM-as-judge",
+      "level": "shipped",
+      "claim_ids": [
+        "mathtutor-eval",
+        "hgd-eval"
+      ]
+    },
+    {
+      "name": "vLLM / AWQ serving",
+      "level": "production",
+      "claim_ids": [
+        "awq-vllm"
+      ]
+    },
+    {
+      "name": "AI agents",
+      "level": "production",
+      "claim_ids": [
+        "rhizome",
+        "agents-work"
+      ]
+    },
+    {
+      "name": "RAG / retrieval",
+      "level": "production",
+      "claim_ids": [
+        "agents-work",
+        "hgd-eval"
+      ]
+    },
+    {
+      "name": "Diffusion media (Flux, Wan, ComfyUI)",
+      "level": "production",
+      "claim_ids": [
+        "media-suite"
+      ]
+    },
+    {
+      "name": "Python, PyTorch, scikit-learn",
+      "level": "daily",
+      "claim_ids": [
+        "mathtutor-ft",
+        "cv-robotics"
+      ]
+    },
+    {
+      "name": "TypeScript, Node.js, Next.js, FastAPI",
+      "level": "daily",
+      "claim_ids": [
+        "llm-gateway"
+      ]
+    },
+    {
+      "name": "AWS, GCP, Azure, RunPod, Docker",
+      "level": "production",
+      "claim_ids": [
+        "media-suite",
+        "awq-vllm"
+      ]
+    }
   ],
   "gaps": [
-    { "topic": "distributed training", "text": "No multi-node pretraining or large-scale RLHF experience; fine-tuning experience is single-GPU QLoRA scale" },
-    { "topic": "kubernetes", "text": "No production Kubernetes experience; container orchestration experience is Docker plus serverless GPU platforms" },
-    { "topic": "seniority", "text": "About two years of professional AI engineering experience; not a staff-level or team-lead background yet" },
-    { "topic": "formal research", "text": "No peer-reviewed publications; evaluation work is engineering-grade, not academic" },
-    { "topic": "big tech", "text": "Experience is at startups and small product companies, not large-scale FAANG infrastructure" }
+    {
+      "topic": "distributed training",
+      "text": "No multi-node pretraining or large-scale RLHF experience; fine-tuning experience is single-GPU QLoRA scale"
+    },
+    {
+      "topic": "kubernetes",
+      "text": "No production Kubernetes experience; container orchestration experience is Docker plus serverless GPU platforms"
+    },
+    {
+      "topic": "seniority",
+      "text": "About two years of professional AI engineering experience; not a staff-level or team-lead background yet"
+    },
+    {
+      "topic": "formal research",
+      "text": "No peer-reviewed publications; evaluation work is engineering-grade, not academic"
+    },
+    {
+      "topic": "big tech",
+      "text": "Experience is at startups and small product companies, not large-scale FAANG infrastructure"
+    }
   ],
   "case_studies": [
-    { "slug": "mathtutor", "row_id": "row-mathtutor", "title": "MathTutor-Qwen3-8B" },
-    { "slug": "hgd-eval", "row_id": "row-hgd", "title": "HGD Memory Engine evaluation" },
-    { "slug": "rhizome", "row_id": "row-rhizome", "title": "Rhizome Logic" }
+    {
+      "slug": "innerlens",
+      "row_id": "row-innerlens",
+      "title": "innerlens"
+    },
+    {
+      "slug": "mathtutor",
+      "row_id": "row-mathtutor",
+      "title": "MathTutor-Qwen3-8B"
+    },
+    {
+      "slug": "hgd-eval",
+      "row_id": "row-hgd",
+      "title": "HGD Memory Engine evaluation"
+    },
+    {
+      "slug": "rhizome",
+      "row_id": "row-rhizome",
+      "title": "Rhizome Logic"
+    }
   ]
 }

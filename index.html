@@ -27,7 +27,7 @@
       "https://huggingface.co/Yash0707",
       "https://www.linkedin.com/in/yash-bambhroliya-6c8542"
     ],
-    "knowsAbout": ["LLM fine-tuning", "Model quantization", "LLM evaluation", "AI agents", "RAG", "Diffusion models"]
+    "knowsAbout": ["LLM interpretability", "LLM fine-tuning", "Model quantization", "LLM evaluation", "AI agents", "RAG", "Diffusion models"]
   }
   </script>
 </head>
@@ -189,13 +189,24 @@
           <p class="kicker">epoch 01 · selected work</p>
           <h2 data-h2>Selected work</h2>
         </div>
-        <span class="count">three case studies, with numbers</span>
+        <span class="count">four case studies, with numbers</span>
       </div>
 
       <div class="work-list">
-        <a class="work-row reveal" href="/work/mathtutor.html" id="row-mathtutor">
+        <a class="work-row reveal" href="/work/innerlens.html" id="row-innerlens">
           <span class="ghost" aria-hidden="true">01</span>
           <span class="num">01</span>
+          <span>
+            <h3>innerlens</h3>
+            <p>Anthropic released Jacobian-lens interpretability research; within a day I shipped the production runtime on PyPI. It reads a model's own activations while it generates and flags fabrications the text alone cannot reveal.</p>
+            <span class="metric-chip">hallucination signal at AUROC 0.80</span>
+          </span>
+          <span class="meta">interpretability · evals →</span>
+        </a>
+
+        <a class="work-row reveal" href="/work/mathtutor.html" id="row-mathtutor">
+          <span class="ghost" aria-hidden="true">02</span>
+          <span class="num">02</span>
           <span>
             <h3>MathTutor-Qwen3-8B</h3>
             <p>Fine-tuned Qwen3-8B into a K-12 math tutor, then built the LLM-as-judge pipeline that grades it. Along the way I caught the judge rewarding the wrong behavior and fixed the methodology.</p>
@@ -205,8 +216,8 @@
         </a>
 
         <a class="work-row reveal" href="/work/hgd-eval.html" id="row-hgd">
-          <span class="ghost" aria-hidden="true">02</span>
-          <span class="num">02</span>
+          <span class="ghost" aria-hidden="true">03</span>
+          <span class="num">03</span>
           <span>
             <h3>HGD Memory Engine evaluation</h3>
             <p>Benchmarked an agent memory engine through six versions and contributed the fix that closed the last gap. Recall went from 40% to 85% while context tokens dropped by 78-93%.</p>
@@ -216,8 +227,8 @@
         </a>
 
         <a class="work-row reveal" href="/work/rhizome.html" id="row-rhizome">
-          <span class="ghost" aria-hidden="true">03</span>
-          <span class="num">03</span>
+          <span class="ghost" aria-hidden="true">04</span>
+          <span class="num">04</span>
           <span>
             <h3>Rhizome Logic</h3>
             <p>A competitive-intelligence agent that runs itself: scheduled collection, per-fact source citations, confidence scores, and a human gate that keeps hallucinated intel out of the record.</p>
@@ -294,11 +305,13 @@
       </div>
       <dl class="reveal">
         <dt>Fine-tuning &amp; serving</dt>
-        <dd>QLoRA, PEFT, AWQ quantization, vLLM, Hugging Face, NEFTune <a class="attn" href="/work/mathtutor.html" style="opacity:.92" title="attends to 01 · MathTutor (0.92)">[01]</a></dd>
+        <dd>QLoRA, PEFT, AWQ quantization, vLLM, Hugging Face, NEFTune <a class="attn" href="/work/mathtutor.html" style="opacity:.92" title="attends to 02 · MathTutor (0.92)">[02]</a></dd>
+        <dt>Interpretability</dt>
+        <dd>Jacobian-lens workspace readouts, internal-confidence scoring, hallucination signals <a class="attn" href="/work/innerlens.html" style="opacity:.9" title="attends to 01 · innerlens (0.90)">[01]</a></dd>
         <dt>Evaluation</dt>
-        <dd>LLM-as-judge pipelines, ablations, benchmark design, judge-bias auditing <a class="attn" href="/work/mathtutor.html" style="opacity:.88" title="attends to 01 · MathTutor (0.88)">[01]</a> <a class="attn" href="/work/hgd-eval.html" style="opacity:.83" title="attends to 02 · HGD eval (0.83)">[02]</a></dd>
+        <dd>LLM-as-judge pipelines, ablations, benchmark design, judge-bias auditing <a class="attn" href="/work/mathtutor.html" style="opacity:.88" title="attends to 02 · MathTutor (0.88)">[02]</a> <a class="attn" href="/work/hgd-eval.html" style="opacity:.83" title="attends to 03 · HGD eval (0.83)">[03]</a></dd>
         <dt>Agents &amp; retrieval</dt>
-        <dd>LangChain, LangGraph, LlamaIndex, CrewAI, RAG, Qdrant, FAISS, Chroma <a class="attn" href="/work/rhizome.html" style="opacity:.9" title="attends to 03 · Rhizome (0.90)">[03]</a> <a class="attn" href="/work/hgd-eval.html" style="opacity:.71" title="attends to 02 · HGD eval (0.71)">[02]</a></dd>
+        <dd>LangChain, LangGraph, LlamaIndex, CrewAI, RAG, Qdrant, FAISS, Chroma <a class="attn" href="/work/rhizome.html" style="opacity:.9" title="attends to 04 · Rhizome (0.90)">[04]</a> <a class="attn" href="/work/hgd-eval.html" style="opacity:.71" title="attends to 03 · HGD eval (0.71)">[03]</a></dd>
         <dt>Media generation</dt>
         <dd>ComfyUI, Flux, SDXL, Wan 2.1/2.2, RealESRGAN, serverless GPU workers</dd>
         <dt>Engineering</dt>
