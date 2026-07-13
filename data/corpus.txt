@@ -102,7 +102,7 @@ Model: Eval:
 Yash Bambhroliya. AI Engineer. I make language models work in production.
 ing Platform (in development) 05/2026 - Present 
 
-- Building a multi-tenant SaaS where dine-in customers scan a table QR code and place orders by talking to an animated avatar in the browser. LLM-orchestrated conversation flow, a live order dashboard for staff, and a NestJS + Next.js 15 monorepo, validated with an LLM-viability spike for the voice-ordering loop.
+- Built and shipped a multi-tenant SaaS where dine-in customers scan a table QR code and place orders by talking to an animated avatar in the browser. LLM-orchestrated conversation flow, a live order dashboard for staff, and a NestJS + Next.js 15 monorepo, validated with an LLM-viability spike for the voice-ordering loop.
 
  HGD Memory Engine (LLM Retrieval Evaluation) 05/2026 
 
@@ -269,7 +269,7 @@ Hugging Face
  
  
  Avatar Restaurant Ordering 
- Dine-in customers scan a QR code and order by talking to an animated avatar. Multi-tenant SaaS, in development. 
+ Dine-in customers scan a QR code and order by talking to an animated avatar. Multi-tenant SaaS, now live. 
  NestJS · Next.js · in progress 
  
  
@@ -753,9 +753,9 @@ Yash Bambhroliya. AI Engineer. I make language models work in production.
 ented verbosity bias and other limitations.
 - Generated and cleaned a multi-turn tutoring-conversation dataset (seed problems, conversation generation, automated cleaning) structured as Goal/Steps/Example/Checkpoint.
 
- AI Avatar Restaurant Ordering Platform (in development) 05/2026 - Present 
+ AI Avatar Restaurant Ordering Platform (live) 05/2026 - Present 
 
-- Building a multi-tenant SaaS where dine-in customers scan a table QR code and place orders by talking to an animated avatar in the browser. LLM-orchestrated conversation flow, a live order dashboard for staff, and a NestJS + Next.js 15 monorepo, validated with an LLM-viability spike for the voice-ordering loop.
+- Built and shipped a multi-tenant SaaS where dine-in customers scan a table QR code and place orders by talking to an animated avatar in the browser. LLM-orchestrated conversation flow, a live order dashboard for staff, and a NestJS + Next.js 15 monorepo, validated with an LLM-viability spike for the voice-ordering loop.
 
  HGD Memory Engine (LLM Retrieval Evaluation) 05/2026 
 
@@ -922,7 +922,7 @@ work in production . Fine-tuning, quantization, serving, evaluation , and agents
  
  
  Avatar Restaurant Ordering 
- Dine-in customers scan a QR code and order by talking to an animated avatar. Multi-tenant SaaS, in development. 
+ Dine-in customers scan a QR code and order by talking to an animated avatar. Multi-tenant SaaS, now live. 
  NestJS · Next.js · in progress 
  
  
