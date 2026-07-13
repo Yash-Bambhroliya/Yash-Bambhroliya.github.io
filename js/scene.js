@@ -413,7 +413,9 @@ import * as THREE from "../vendor/three.module.min.js";
       /* guided demos borrow the camera and hand it back */
       if (S.demo.mode) {
         var dt = S.demo.t;
-        var dw = smoothstep(Math.min(dt / 0.12, (1 - dt) / 0.1, 1));
+        /* ramp in and hold: the stage is handed to the visitor at the end,
+           so the camera never retreats on its own */
+        var dw = smoothstep(Math.min(dt / 0.12, 1));
         var dPos = null, dLook = null;
         var nc = netCenter();
         if (S.demo.mode === "pass") {
