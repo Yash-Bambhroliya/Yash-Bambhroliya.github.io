@@ -1175,10 +1175,10 @@
         return;
       }
       xpEl.style.setProperty("--axis", "0");
-      /* same viewport line at both ends: the drawn tip then tracks exactly
-         where the reader's eye crosses the axis, never running ahead */
+      /* the tip tracks one viewport line; higher on screen means the line
+         arrives later and follows the eye instead of leading it */
       ScrollTrigger.create({
-        trigger: xpEl, start: "top 80%", end: "bottom 80%", scrub: 0.4,
+        trigger: xpEl, start: "top 62%", end: "bottom 62%", scrub: 0.4,
         onUpdate: function (self) {
           xpEl.style.setProperty("--axis", self.progress.toFixed(4));
         }
