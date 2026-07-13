@@ -348,7 +348,8 @@ import * as THREE from "../vendor/three.module.min.js";
     /* the network exists only inside the fly-through; idling in the fog it
        reads as an artifact, worst on the light theme */
     var demoNet = S.demo.mode === "pass" || S.demo.mode === "shot";
-    var netOn = S.interlude > 0.001 || demoNet;
+    var flightOn = S.interlude > 0.001;
+    var netOn = flightOn || demoNet;
     if (S.net) {
       S.net.visible = netOn;
       if (netOn) {
@@ -356,14 +357,14 @@ import * as THREE from "../vendor/three.module.min.js";
           var m = S.pulseMats[i];
           m.opacity = m.userData.base * (0.7 + 0.5 * Math.sin(t * 2 + i * 1.7));
         }
-        S.net.rotation.z = Math.sin(t * 0.12) * 0.05;
+        S.net.rotation.z = flightOn ? Math.sin(t * 0.12) * 0.05 : 0;
       }
     }
 
     /* camera: the reader walks the same valley the model descends.
        interlude fly-through > journey path rig > hero vista, blended. */
     var cam = S.camera;
-    if (netOn) {
+    if (flightOn) {
       var p = Math.min(1, S.interlude);
       cam.position.copy(S.camCurve.getPointAt(p));
       var look = new THREE.Vector3().copy(S.net.position);
