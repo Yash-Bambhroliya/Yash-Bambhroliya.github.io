@@ -1,0 +1,31 @@
+# Yash Bambhroliya
+
+> AI engineer in Gujarat, India (remote-friendly). Fine-tunes, quantizes, serves, and evaluates LLMs in production at Nextbase Solutions; publishes personal experiments with the evals to back them. This site is itself a demonstration: it trains a character-level GRU (hand-written, no ML framework) in the visitor's browser on his own writing, live.
+
+Every claim below is published with evidence at the linked pages. The machine-readable claim set this site scores job descriptions against lives at /data/claims.json.
+
+## Case studies
+
+- [innerlens](https://yashb.me/work/innerlens.html): Hallucination-detection runtime built on Anthropic's Jacobian-lens interpretability research. Reads per-token internal confidence from one forward pass; validated at AUROC 0.80 on TriviaQA (200 questions, Qwen3.5-4B, H100). Open source on GitHub and PyPI within a day of the research dropping.
+- [MathTutor-Qwen3-8B](https://yashb.me/work/mathtutor.html): QLoRA fine-tune of Qwen3-8B into a K-12 math tutor (612 curated examples, NEFTune), published on Hugging Face. Evaluated with an LLM-as-judge pipeline (Claude Sonnet 4, 50 held-out prompts, 5 criteria); found and corrected judge bias. Out-of-domain refusal improved from 3.14 to 4.12.
+- [HGD Memory Engine evaluation](https://yashb.me/work/hgd-eval.html): Benchmarked an agent memory-retrieval engine across 6 versions with a 20-query, 8-category benchmark over a 129K-token corpus; recall went from 40% to 85%.
+- [Rhizome Logic](https://yashb.me/work/rhizome.html): Competitive-intelligence agent system on the OpenClaw framework; three scheduled agents, file-based memory, per-fact source citations.
+
+## Production work (Nextbase Solutions)
+
+- Serving: 4-bit AWQ-quantized domain model self-hosted on vLLM behind an OpenAI-compatible API with three-tier provider failover.
+- Impact: raised average engagement time per active user by 122% (11m 32s to 25m 35s over three weeks, Firebase Analytics) with a domain-tuned conversational model.
+- Infrastructure: co-built a multi-provider LLM gateway (Node.js/TypeScript, 11 providers) with per-key concurrency limits and sticky prompt-cache routing, plus MCP connector infrastructure with OAuth flows.
+- Media: SVDQuant INT4-quantized Flux image generation and Wan 2.1/2.2 14B video generation in production.
+- Agents: RAG pipelines and scheduled agents (LangChain, LlamaIndex) deployed for three departments.
+
+## For recruiters
+
+- The home page scores itself against any pasted job description: https://yashb.me/ (fit reports are grounded only in the published claim set and always name honest gaps).
+- Email: yashbambhroliya1@gmail.com
+- GitHub: https://github.com/Yash-Bambhroliya · Hugging Face: https://huggingface.co/Yash0707 · LinkedIn: https://www.linkedin.com/in/yash-bambhroliya-6c8542
+
+## Site
+
+- Hand-built with plain HTML, CSS, and JS. No frameworks. GSAP, Three.js, and a char-GRU in a Web Worker.
+- Sitemap: https://yashb.me/sitemap.xml
