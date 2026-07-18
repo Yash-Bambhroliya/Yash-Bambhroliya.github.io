@@ -15,6 +15,7 @@ window.ANATOMY = (function () {
   var stage, stack, sheets = [], chips = [], bomRows = [];
   var canvasHome = null, canvasMark = null, movedCanvas = null;
   var state = { t: 0 };
+  var insp = 0;                       /* eased 0..1 while a sheet is held */
   var Z = [], V = [], seated = [];
   var raf = null, lastNow = 0, idleTimer = null;
   var N = 8;
@@ -232,7 +233,11 @@ window.ANATOMY = (function () {
          perspective but keeps depth sorting honest while springs settle,
          so the terrain's occluder can never paint over the type */
       var z = ((N - 1) / 2 - i) * a.gap * tl + (N - 1 - i) * 0.6;
-      if (inspecting >= 0) z += i === inspecting ? 330 : -70;
+      /* holding a sheet: it comes to one fixed reading depth no matter
+         which stratum it lives in; the rest compress into the background */
+      if (inspecting >= 0) {
+        z = i === inspecting ? 250 : z * 0.3 - 70;
+      }
       out.push(z);
     }
     return out;
@@ -245,7 +250,12 @@ window.ANATOMY = (function () {
     var tg = targets();
     var a = attitude();
     var e = state.t * state.t * (3 - 2 * state.t);
-    stack.style.transform = "scale(" + (1 - a.out * e) + ") rotateX(" + (a.rx * e) + "deg) rotateZ(" + (a.rz * e) + "deg)";
+    /* while a sheet is held, the whole stack eases toward frontal so the
+       held sheet reads flat, wherever it came from in the stack */
+    insp += ((inspecting >= 0 ? 1 : 0) - insp) * Math.min(1, dt * 7);
+    var rx = a.rx * e * (1 - 0.72 * insp);
+    var rz = a.rz * e * (1 - 0.72 * insp);
+    stack.style.transform = "scale(" + (1 - a.out * e + 0.06 * insp) + ") rotateX(" + rx + "deg) rotateZ(" + rz + "deg)";
     var allSeated = true;
     for (var i = 0; i < N; i++) {
       var k = 130 - i * 9;                       /* deep sheets are heavier */
@@ -263,7 +273,7 @@ window.ANATOMY = (function () {
       sheets[i].style.setProperty("--sheet", (0.62 * e).toFixed(3));
       sheets[i].style.setProperty("--xray", e.toFixed(3));
       sheets[i].style.setProperty("--chipop", Math.max(0, (state.t - 0.5) / 0.5).toFixed(3));
-      chips[i].style.transform = "rotateZ(" + (-a.rz * e) + "deg) rotateX(" + (-a.rx * e) + "deg) scale(" + (1 + 0.5 * e) + ")";
+      chips[i].style.transform = "rotateZ(" + (-rz) + "deg) rotateX(" + (-rx) + "deg) scale(" + (1 + 0.5 * e) + ")";
       sheets[i].classList.toggle("dim", inspecting >= 0 && inspecting !== i);
     }
     stage.classList.toggle("apart", state.t > 0.35);
@@ -286,6 +296,7 @@ window.ANATOMY = (function () {
     if (arriving) { e.preventDefault(); hurry(); return; }
     if (!active) return;
     e.preventDefault();
+    if (inspecting >= 0) return;      /* a held sheet ignores the scrub */
     gsap.killTweensOf(state);
     state.t = Math.max(0, Math.min(1, state.t + e.deltaY * 0.0009));
     clearTimeout(idleTimer);
