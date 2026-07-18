@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>og source · render at exactly 1200x630</title>
+<style>
+  @font-face {
+    font-family: "Space Grotesk";
+    src: url("/fonts/space-grotesk-latin.woff2") format("woff2");
+    font-weight: 300 700;
+    font-display: block;
+  }
+  @font-face {
+    font-family: "Instrument Serif";
+    src: url("/fonts/instrument-serif-italic-latin.woff2") format("woff2");
+    font-weight: 400;
+    font-style: italic;
+    font-display: block;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    background: #0b0c10;
+    color: #f2f3ee;
+    font-family: "Space Grotesk", sans-serif;
+    position: relative;
+  }
+  .frame {
+    position: absolute;
+    inset: 26px;
+    border: 1px solid #23252c;
+  }
+  .tick { position: absolute; width: 22px; height: 22px; }
+  .tick::before, .tick::after { content: ""; position: absolute; background: #4b4e58; }
+  .tick::before { width: 22px; height: 1px; }
+  .tick::after { width: 1px; height: 22px; }
+  .tl { top: 15px; left: 15px; }
+  .tr { top: 15px; right: 15px; transform: scaleX(-1); }
+  .bl { bottom: 15px; left: 15px; transform: scaleY(-1); }
+  .br { bottom: 15px; right: 15px; transform: scale(-1); }
+  .tl::before, .tr::before { top: 0; left: 0; }
+  .tl::after, .tr::after { top: 0; left: 0; }
+  .bl::before, .br::before { bottom: 0; left: 0; }
+  .bl::after, .br::after { bottom: 0; left: 0; }
+
+  .doc {
+    position: absolute;
+    top: 44px;
+    left: 64px;
+    right: 64px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #7d7e78;
+  }
+  .name {
+    position: absolute;
+    left: 64px;
+    top: 158px;
+    font-size: 92px;
+    font-weight: 700;
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+  }
+  .role {
+    position: absolute;
+    left: 64px;
+    top: 388px;
+    font-size: 26px;
+    color: #b9bab2;
+    letter-spacing: 0.02em;
+  }
+  .voice {
+    position: absolute;
+    left: 64px;
+    top: 452px;
+    font-family: "Instrument Serif", serif;
+    font-style: italic;
+    font-size: 30px;
+    color: #8fb7e8;
+  }
+  .curve {
+    position: absolute;
+    right: 64px;
+    bottom: 118px;
+    width: 300px;
+    height: 130px;
+  }
+  .curve svg { width: 100%; height: 100%; }
+  .curve .label {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    fill: #7d7e78;
+  }
+  .plate {
+    position: absolute;
+    left: 64px;
+    right: 64px;
+    bottom: 46px;
+    display: flex;
+    gap: 34px;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #7d7e78;
+    border-top: 1px solid #23252c;
+    padding-top: 16px;
+  }
+  .plate b { color: #b9bab2; font-weight: 500; }
+</style>
+</head>
+<body>
+  <div class="frame"></div>
+  <i class="tick tl"></i><i class="tick tr"></i><i class="tick bl"></i><i class="tick br"></i>
+
+  <div class="doc"><span>yashb.me · working drawing</span><span>sheet 01 / 05 · rev 05</span></div>
+
+  <div class="name">Yash<br>Bambhroliya</div>
+  <div class="role">AI Engineer · fine-tuning, serving, evaluation, agents</div>
+  <div class="voice">this page trains a neural network in your browser</div>
+
+  <div class="curve">
+    <svg viewBox="0 0 300 130">
+      <path d="M8 14 C 60 18, 78 52, 118 68 S 190 96, 232 104 S 280 110, 292 112"
+            fill="none" stroke="#3ea6ff" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="8" y1="118" x2="292" y2="118" stroke="#23252c" stroke-width="1"/>
+      <text class="label" x="8" y="14" dy="-2" text-anchor="start" transform="translate(0,10)"></text>
+      <text class="label" x="292" y="128" text-anchor="end">loss, live</text>
+    </svg>
+  </div>
+
+  <div class="plate">
+    <span>zero frameworks</span>
+    <span>gsap · three.js · <b>one gru, trained in your tab</b></span>
+    <span>evals with real numbers</span>
+  </div>
+</body>
+</html>

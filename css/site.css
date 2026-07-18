@@ -790,6 +790,85 @@ footer {
 
 footer a { color: var(--ink-2); }
 
+/* ---------- the title block: every sheet signs itself off ---------- */
+
+.colophon {
+  display: grid;
+  grid-template-columns: 5fr 4fr 3fr;
+  border: 1px solid var(--hairline);
+}
+
+.colophon > div {
+  min-width: 0;
+  padding: 0.62rem 0.85rem 0.68rem;
+  border-right: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.colophon > div:nth-child(3n) { border-right: 0; }
+.colophon > div:nth-last-child(-n + 3) { border-bottom: 0; }
+
+.col-k {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 0.3rem;
+}
+
+.col-v {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+  overflow-wrap: break-word;
+}
+
+.col-v a { color: var(--ink-2); text-decoration-color: var(--hairline); }
+.col-v a:hover { color: var(--ink); }
+
+@media (max-width: 46rem) {
+  .colophon { grid-template-columns: 1fr; }
+  .colophon > div { border-right: 0; }
+  .colophon > div:nth-last-child(-n + 3) { border-bottom: 1px solid var(--hairline); }
+  .colophon > div:last-child { border-bottom: 0; }
+}
+
+/* ---------- sheet 404: the missing detail ---------- */
+
+.nf {
+  min-height: calc(100vh - 3.5rem);
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  position: relative;
+  padding-block: 6rem 4rem;
+}
+
+.nf-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(6.5rem, 24vw, 15rem);
+  line-height: 0.88;
+  letter-spacing: 0.02em;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--ink-3);
+  user-select: none;
+  margin-bottom: 1.2rem;
+}
+
+.nf h1 { font-size: clamp(1.6rem, 4vw, 2.4rem); margin-bottom: 0.8rem; }
+.nf .lead { max-width: 34rem; }
+
+.nf-note {
+  margin-top: 2.2rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+
 /* ---------- case study pages ---------- */
 
 .cs-header { padding-block: clamp(3rem, 8vw, 5.5rem) clamp(2rem, 5vw, 3rem); }
@@ -1182,6 +1261,13 @@ main, footer { position: relative; z-index: 2; }
 
 .temp-ctl:hover { border-color: var(--accent); color: var(--ink); }
 .temp-ctl .t-val { color: var(--accent); font-weight: 600; min-width: 2ch; }
+
+/* the sound pill keeps a fixed seat width so on/off does not reflow the
+   nav; below 900px it stands down and the terminal owns the switch */
+.sound-ctl .t-val { min-width: 3ch; }
+@media (max-width: 56.25rem) {
+  .nav-links .sound-ctl { display: none; }
+}
 
 :root { --spring: cubic-bezier(0.2, 0.65, 0.1, 1); --motion-scale: 1; }
 body[data-temp="0.0"] { --motion-scale: 0; }
