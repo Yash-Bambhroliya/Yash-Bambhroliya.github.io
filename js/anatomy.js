@@ -293,7 +293,15 @@ window.ANATOMY = (function () {
   /* ---------- input ---------- */
 
   function onWheel(e) {
-    if (arriving) { e.preventDefault(); hurry(); return; }
+    /* teardown windows: the reader wants the page, hand it over mid-tick
+       and let this very scroll reach the document */
+    if (closing) { instantDone(); return; }
+    if (arriving) {
+      if (state.t <= 0.45) { instantDone(); return; }
+      e.preventDefault();
+      hurry();
+      return;
+    }
     if (!active) return;
     e.preventDefault();
     if (inspecting >= 0) return;      /* a held sheet ignores the scrub */
@@ -309,7 +317,12 @@ window.ANATOMY = (function () {
 
   var dragY = null, dragT = 0;
   function onDown(e) {
-    if (arriving) { hurry(); return; }
+    if (closing) { instantDone(); return; }
+    if (arriving) {
+      if (state.t <= 0.45) { instantDone(); return; }
+      hurry();
+      return;
+    }
     if (e.target.closest(".an-bom")) return;
     dragY = e.clientY; dragT = state.t;
     gsap.killTweensOf(state);
@@ -396,26 +409,41 @@ window.ANATOMY = (function () {
     startLoop();
   }
 
+  /* one synchronous exit: no window in which a scroll can re-tear the page */
+  var closing = false;
+  function instantDone() {
+    gsap.killTweensOf(state);
+    clearTimeout(idleTimer);
+    state.t = 0;
+    active = false;
+    arriving = false;
+    closing = false;
+    inspecting = -1;
+    stopLoop();
+    if (stage) {
+      stage.classList.remove("on");
+      stage.classList.remove("arriving");
+      stage.classList.remove("apart");
+    }
+    restoreCanvas();
+    document.body.classList.remove("anatomy-on");
+    if (window.__lenis) window.__lenis.start();
+  }
+
   function close() {
-    if (!active) return;
+    if (!active || closing) return;
+    closing = true;
     inspecting = -1;
     bomRows.forEach(function (r) { r.classList.remove("on"); });
-    var done = function () {
-      active = false;
-      stopLoop();
-      stage.classList.remove("on");
-      restoreCanvas();
-      document.body.classList.remove("anatomy-on");
-      if (window.__lenis) window.__lenis.start();
-    };
-    if (reduced) { state.t = 0; done(); return; }
+    /* already seated: the stage is a twin of the page, swap now */
+    if (reduced || state.t < 0.02) { instantDone(); return; }
     gsap.to(state, {
-      t: 0, duration: 0.7, ease: "power3.inOut",
-      onComplete: function () { setTimeout(done, 240); }
+      t: 0, duration: 0.55, ease: "power3.inOut",
+      onComplete: function () { setTimeout(instantDone, 90); }
     });
   }
 
-  function toggle() { active ? close() : open(); }
+  function toggle() { active && !closing ? close() : (active ? null : open()); }
 
   /* the arrival: the page assembles out of its own diagram, once, at load */
   var arrivalDone = false, hurried = false;
@@ -423,17 +451,15 @@ window.ANATOMY = (function () {
     if (!arriving || hurried) return;
     hurried = true;
     gsap.killTweensOf(state);
-    gsap.to(state, { t: 0, duration: 0.35, ease: "power2.out" });
+    gsap.to(state, { t: 0, duration: 0.28, ease: "power2.out", onComplete: finishArrival });
   }
   function finishArrival() {
     if (!arriving) return;
     arriving = false;
+    closing = true;
     if (stage) stage.classList.remove("arriving");
     gsap.fromTo(stack, { x: 0 }, { x: 2, duration: 0.05, repeat: 3, yoyo: true, clearProps: "x" });
-    setTimeout(function () {
-      active = true;   /* let close() run its teardown */
-      close();
-    }, 260);
+    setTimeout(instantDone, 170);
   }
 
   function arriveEligible() {
@@ -455,7 +481,7 @@ window.ANATOMY = (function () {
     startLoop();
     gsap.to(state, {
       t: 0, duration: 1.9, delay: 0.35, ease: "power3.inOut",
-      onComplete: function () { gsap.delayedCall(0.4, finishArrival); }
+      onComplete: function () { gsap.delayedCall(0.15, finishArrival); }
     });
     return true;
   }
