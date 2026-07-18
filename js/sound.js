@@ -109,6 +109,13 @@ window.SOUND = (function () {
       blip(190, 0.1, "triangle", 0.045);
       blip(95, 0.13, "sine", 0.03);
     },
+    /* a strike on the terrain grid, pitched by how deep the reader is */
+    strike: function (depth) {
+      if (!gate("strike", 90)) return;
+      var f = 500 - Math.min(1, Math.max(0, depth || 0)) * 220;
+      blip(f, 0.14, "triangle", 0.03);
+      blip(f * 1.5, 0.2, "triangle", 0.018, 0.05);
+    },
     chime: function () {
       if (!gate("chime", 600)) return;
       blip(659, 0.22, "sine", 0.05);

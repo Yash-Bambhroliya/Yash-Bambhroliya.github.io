@@ -118,15 +118,219 @@ import * as THREE from "../vendor/three.module.min.js";
     var fill = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
       color: cssColor("--paper"), polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
     }));
+    /* the wire carries its ink per vertex so a strike can charge the exact
+       vertices and edges it touches; material color stays white (multiplier) */
+    STRIKE.base.copy(cssColor("--ink-3"));
+    var wcols = new Float32Array(pos.count * 3);
+    for (var wi = 0; wi < pos.count; wi++) {
+      wcols[wi * 3] = STRIKE.base.r; wcols[wi * 3 + 1] = STRIKE.base.g; wcols[wi * 3 + 2] = STRIKE.base.b;
+    }
+    geo.setAttribute("color", new THREE.BufferAttribute(wcols, 3));
     var wire = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
-      color: cssColor("--ink-3"), wireframe: true, transparent: true, opacity: 0.32
+      color: 0xffffff, vertexColors: true, wireframe: true, transparent: true, opacity: 0.32
     }));
+    /* glow dots on the exact grid vertices, visible only where charged */
+    var pgeo = new THREE.BufferGeometry();
+    pgeo.setAttribute("position", pos);
+    pgeo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(pos.count * 3), 3));
+    S.strikePts = new THREE.Points(pgeo, new THREE.PointsMaterial({
+      map: glowTexture(), size: 1.4, vertexColors: true, transparent: true,
+      blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true
+    }));
+    /* order matters: refreshColors addresses children[0] (fill) and the wire */
     group.add(fill);
     group.add(wire);
+    group.add(S.strikePts);
     S.terrain = group;
     S.terrainWire = wire;
     group.position.set(0, -14, -30);
     return group;
+  }
+
+  /* ---------- the lit grid: strikes travel the wireframe ----------
+     Clicks on exposed terrain charge the mesh: a core at the strike point
+     plus a ring that rides outward along the wires, decaying back to ink.
+     A faint ember trails the pointer so the grid whispers before it is
+     asked, and the funnel (demonstration, idle nudge) teaches by showing. */
+  var STRIKE = {
+    pulses: [],
+    hov: { x: 0, z: 0, tx: 0, tz: 0, amp: 0, target: 0 },
+    base: new THREE.Color(0x7d7e78),
+    hot: new THREE.Color(0x3ea6ff),
+    paint: true, armed: false, struck: false,
+    probeHit: false, probeAt: 0
+  };
+
+  function addStrike(worldPt, silent) {
+    if (!S.ready || !S.terrain) return;
+    if (STRIKE.pulses.length >= 12) STRIKE.pulses[0].boost = 4;
+    STRIKE.pulses.push({
+      x: worldPt.x - S.terrain.position.x,
+      z: worldPt.z - S.terrain.position.z,
+      t: 0, boost: 1
+    });
+    STRIKE.paint = true;
+    if (!silent && window.SOUND) SOUND.strike(S.journeyShown);
+  }
+
+  function paintStrike() {
+    var wire = S.terrainWire;
+    if (!wire || !wire.geometry.attributes.color) return;
+    var posA = wire.geometry.attributes.position.array;
+    var wcol = wire.geometry.attributes.color.array;
+    var pcol = S.strikePts.geometry.attributes.color.array;
+    var count = wire.geometry.attributes.position.count;
+    var br = STRIKE.base.r, bg = STRIKE.base.g, bb = STRIKE.base.b;
+    var hr = STRIKE.hot.r, hg = STRIKE.hot.g, hb = STRIKE.hot.b;
+    var act = [];
+    for (var j = 0; j < STRIKE.pulses.length; j++) {
+      var q = STRIKE.pulses[j];
+      var ringAmp = Math.exp(-q.t * 1.6);
+      var coreAmp = Math.exp(-q.t * 3.2);
+      if (ringAmp < 0.012 && coreAmp < 0.012) continue;
+      var st = q.t * 26;
+      var lo = Math.max(0, st - 16);
+      act.push({ x: q.x, z: q.z, st: st, ringAmp: ringAmp, coreAmp: coreAmp, lo2: lo * lo, hi2: (st + 16) * (st + 16) });
+    }
+    var m = act.length;
+    var hov = STRIKE.hov;
+    var hOn = hov.amp > 0.012;
+    for (var i = 0; i < count; i++) {
+      var h = 0;
+      if (m || hOn) {
+        var vx = posA[i * 3], vz = posA[i * 3 + 2];
+        for (var k2 = 0; k2 < m; k2++) {
+          var a2 = act[k2];
+          var dx = vx - a2.x, dz = vz - a2.z;
+          var d2 = dx * dx + dz * dz;
+          if (d2 < 121) h += Math.exp(-d2 / 14) * a2.coreAmp;
+          if (d2 >= a2.lo2 && d2 <= a2.hi2) {
+            var r2 = Math.sqrt(d2) - a2.st;
+            h += Math.exp(-(r2 * r2) / 34) * a2.ringAmp;
+          }
+        }
+        if (hOn) {
+          var hdx = vx - hov.x, hdz = vz - hov.z;
+          var hd2 = hdx * hdx + hdz * hdz;
+          if (hd2 < 90) h += Math.exp(-hd2 / 9) * 0.24 * hov.amp;
+        }
+        if (h > 1) h = 1;
+      }
+      var i3 = i * 3;
+      wcol[i3] = br + (hr - br) * h;
+      wcol[i3 + 1] = bg + (hg - bg) * h;
+      wcol[i3 + 2] = bb + (hb - bb) * h;
+      var ph = h * h;
+      pcol[i3] = hr * ph;
+      pcol[i3 + 1] = hg * ph;
+      pcol[i3 + 2] = hb * ph;
+    }
+    wire.geometry.attributes.color.needsUpdate = true;
+    S.strikePts.geometry.attributes.color.needsUpdate = true;
+  }
+
+  var strikeRay = new THREE.Raycaster();
+  var strikeNdc = new THREE.Vector2();
+  function terrainHitAt(cx, cy) {
+    if (!S.ready || !S.terrain) return null;
+    strikeNdc.set((cx / window.innerWidth) * 2 - 1, -(cy / window.innerHeight) * 2 + 1);
+    strikeRay.setFromCamera(strikeNdc, S.camera);
+    var hit = strikeRay.intersectObject(S.terrain.children[0], false);
+    return hit.length ? hit[0].point : null;
+  }
+
+  var STRIKE_UI = "a, button, input, textarea, select, [role=button], .lp, .an-row, .term, .temp-ctl, .theme-toggle, .nav, summary, label";
+  function strikeBlocked(e) {
+    if (!S.ready) return true;
+    if (document.body.classList.contains("demo-on")) return true;
+    var an = document.querySelector(".anatomy");
+    if (an && (an.classList.contains("on") || an.classList.contains("arriving"))) return true;
+    var pre = document.querySelector(".preloader");
+    if (pre && !pre.classList.contains("done")) return true;
+    return !!(e && e.target && e.target.closest && e.target.closest(STRIKE_UI));
+  }
+
+  document.addEventListener("click", function (e) {
+    if (strikeBlocked(e)) return;
+    var pt = terrainHitAt(e.clientX, e.clientY);
+    if (pt) { STRIKE.struck = true; addStrike(pt, false); }
+  });
+
+  var FINE_PTR = window.matchMedia && window.matchMedia("(pointer: fine)").matches;
+  function probePointer(cx, cy) {
+    STRIKE.probeAt = performance.now();
+    var el = document.elementFromPoint(cx, cy);
+    if (!el || strikeBlocked({ target: el })) { STRIKE.hov.target = 0; STRIKE.probeHit = false; return; }
+    var pt = terrainHitAt(cx, cy);
+    if (pt) {
+      STRIKE.hov.tx = pt.x - S.terrain.position.x;
+      STRIKE.hov.tz = pt.z - S.terrain.position.z;
+      if (STRIKE.hov.amp < 0.02) { STRIKE.hov.x = STRIKE.hov.tx; STRIKE.hov.z = STRIKE.hov.tz; }
+      STRIKE.hov.target = 1;
+      STRIKE.probeHit = true;
+    } else {
+      STRIKE.hov.target = 0;
+      STRIKE.probeHit = false;
+    }
+  }
+  if (FINE_PTR) {
+    document.addEventListener("pointermove", function (e) {
+      /* only a real mouse drives the hover ember and the strike verb:
+         touch drags would pin them to wherever the finger last was */
+      if (e.pointerType && e.pointerType !== "mouse") return;
+      STRIKE.cx = e.clientX;
+      STRIKE.cy = e.clientY;
+      if (performance.now() - STRIKE.probeAt < 55) return;
+      probePointer(e.clientX, e.clientY);
+    }, { passive: true });
+  }
+
+  /* touch: the scroll gesture itself strikes where the finger landed.
+     A plain tap already strikes through the click path; a drag never
+     produces a click, so the two can't double-fire. */
+  var touchCand = null;
+  document.addEventListener("pointerdown", function (e) {
+    if (e.pointerType === "mouse") return;
+    if (strikeBlocked(e)) { touchCand = null; return; }
+    touchCand = { x: e.clientX, y: e.clientY, id: e.pointerId, fired: false };
+  }, { passive: true });
+  function touchDragStrike() {
+    if (!touchCand || touchCand.fired) return;
+    touchCand.fired = true;
+    var pt = terrainHitAt(touchCand.x, touchCand.y);
+    if (pt) { STRIKE.struck = true; addStrike(pt, false); }
+  }
+  document.addEventListener("pointermove", function (e) {
+    if (!touchCand || e.pointerType === "mouse" || e.pointerId !== touchCand.id) return;
+    if (Math.abs(e.clientY - touchCand.y) > 12 || Math.abs(e.clientX - touchCand.x) > 12) touchDragStrike();
+  }, { passive: true });
+  document.addEventListener("pointercancel", function (e) {
+    /* the browser stealing the pointer for scrolling IS the drag signal */
+    if (touchCand && e.pointerId === touchCand.id) touchDragStrike();
+    touchCand = null;
+  }, { passive: true });
+  document.addEventListener("pointerup", function () { touchCand = null; }, { passive: true });
+
+  function strikeTick(dt) {
+    if (!S.terrainWire) return;
+    /* a resting hand still deserves a fresh probe: covers stationary
+       cursors and content scrolling underneath them */
+    if (FINE_PTR && STRIKE.cx !== undefined && performance.now() - STRIKE.probeAt > 180) {
+      probePointer(STRIKE.cx, STRIKE.cy);
+    }
+    for (var i = STRIKE.pulses.length - 1; i >= 0; i--) {
+      STRIKE.pulses[i].t += dt * (STRIKE.pulses[i].boost || 1);
+      if (STRIKE.pulses[i].t > 2.6) STRIKE.pulses.splice(i, 1);
+    }
+    var hov = STRIKE.hov;
+    hov.amp += (hov.target - hov.amp) * Math.min(1, dt * 6);
+    hov.x += (hov.tx - hov.x) * Math.min(1, dt * 12);
+    hov.z += (hov.tz - hov.z) * Math.min(1, dt * 12);
+    var hovOn = hov.amp > 0.012;
+    if (STRIKE.pulses.length || hovOn || STRIKE.paint) {
+      paintStrike();
+      STRIKE.paint = STRIKE.pulses.length > 0 || hovOn;
+    }
   }
 
   function glowTexture() {
@@ -354,6 +558,9 @@ import * as THREE from "../vendor/three.module.min.js";
   function loop(now) {
     S.raf = requestAnimationFrame(loop);
     var t = (now - S.t0) / 1000;
+    var dt = Math.min(0.05, (now - (S.prevNow || now)) / 1000) || 0.016;
+    S.prevNow = now;
+    strikeTick(dt);
 
     /* smooth the driven values */
     S.trainingShown += (S.training - S.trainingShown) * 0.04;
@@ -621,7 +828,10 @@ import * as THREE from "../vendor/three.module.min.js";
       var paper = cssColor("--paper"), accent = cssColor("--accent"), ink3 = cssColor("--ink-3");
       S.scene.fog.color = paper;
       S.terrain.children[0].material.color = paper;
-      S.terrain.children[1].material.color = ink3;
+      /* the wire's ink lives in vertex colors now (material stays white) */
+      STRIKE.base.copy(ink3);
+      STRIKE.hot.copy(accent).lerp(new THREE.Color(0xffffff), 0.3);
+      STRIKE.paint = true;
       S.ball.material.color = accent;
       S.ballGlow.material.color = accent;
       S.trail.material.color = accent;
@@ -650,6 +860,39 @@ import * as THREE from "../vendor/three.module.min.js";
         pm.color = accent;
         pm.needsUpdate = true;
       });
+      if (S.strikePts) {
+        /* additive glow dots read as ink smudges on paper: on the light
+           theme the charged edges carry the strike alone */
+        S.strikePts.visible = !light;
+        S.strikePts.material.needsUpdate = true;
+      }
+    },
+
+    /* cursor.js asks this to show the strike verb over exposed terrain */
+    overTerrain: function () {
+      return STRIKE.probeHit && performance.now() - STRIKE.probeAt < 400 &&
+        !document.body.classList.contains("demo-on");
+    },
+
+    /* the discoverability funnel: demonstrate once, then nudge the idle.
+       Idempotent; armed from the arrival finale or the plain hero intro. */
+    startStrikeFunnel: function () {
+      if (STRIKE.armed) return;
+      STRIKE.armed = true;
+      setTimeout(function () {
+        if (S.ready && S.ball && !STRIKE.struck) addStrike({ x: S.ball.position.x, z: S.ball.position.z }, true);
+      }, 1200);
+      var count = 0;
+      (function nudge() {
+        setTimeout(function () {
+          if (STRIKE.struck || !S.ready) return;
+          var wp = STRIKE.hov.amp > 0.05
+            ? { x: STRIKE.hov.x + S.terrain.position.x + 2.5, z: STRIKE.hov.z + S.terrain.position.z + 2 }
+            : (S.ball ? { x: S.ball.position.x, z: S.ball.position.z } : null);
+          if (wp) addStrike(wp, true);
+          nudge();
+        }, count++ === 0 ? 8000 : 20000);
+      })();
     },
 
     stats: function () {

@@ -396,6 +396,7 @@
       if (instant || reduced) {
         pre.classList.add("done");
         heroIntro();
+        if (window.SCENE && SCENE.startStrikeFunnel) SCENE.startStrikeFunnel();
         return;
       }
       gsap.to(pre, {
@@ -405,9 +406,16 @@
       /* the page assembles out of its own exploded diagram; the assembly IS
          the intro, so the typed hero reveal stands down when it plays */
       if (window.ANATOMY && ANATOMY.arriveEligible && ANATOMY.arriveEligible()) {
-        setTimeout(function () { if (!ANATOMY.arrive()) heroIntro(); }, 60);
+        /* the arrival finale arms the strike funnel itself */
+        setTimeout(function () {
+          if (!ANATOMY.arrive()) {
+            heroIntro();
+            if (window.SCENE && SCENE.startStrikeFunnel) SCENE.startStrikeFunnel();
+          }
+        }, 60);
       } else {
         heroIntro();
+        if (window.SCENE && SCENE.startStrikeFunnel) SCENE.startStrikeFunnel();
       }
     }
 

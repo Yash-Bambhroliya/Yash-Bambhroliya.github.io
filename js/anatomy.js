@@ -460,6 +460,8 @@ window.ANATOMY = (function () {
     if (stage) stage.classList.remove("arriving");
     gsap.fromTo(stack, { x: 0 }, { x: 2, duration: 0.05, repeat: 3, yoyo: true, clearProps: "x" });
     setTimeout(instantDone, 170);
+    /* the assembly's last beat teaches the grid: one pulse, unprompted */
+    if (window.SCENE && SCENE.startStrikeFunnel) setTimeout(function () { SCENE.startStrikeFunnel(); }, 300);
   }
 
   function arriveEligible() {

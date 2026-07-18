@@ -205,6 +205,9 @@
         var hr = hotEl.getBoundingClientRect();
         if (hr.width <= 720 && hr.height <= 400) rect = hr;
         vword = verbFor(hotEl);
+      } else if (window.SCENE && SCENE.overTerrain && SCENE.overTerrain()) {
+        /* exposed terrain is clickable too: the grid takes a strike */
+        vword = "strike";
       }
 
       var size = hotEl && !rect ? 34 : rect ? 14 : 20;
