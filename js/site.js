@@ -125,12 +125,14 @@
         soundLabel();
       }
       if (SND.saved()) {
+        /* pointerup, not pointerdown: Chrome grants the audio gesture on the
+           tail of a tap, so waking on the press start warns and stays mute */
         var wake = function () {
-          document.removeEventListener("pointerdown", wake);
+          document.removeEventListener("pointerup", wake);
           document.removeEventListener("keydown", wake);
           if (SND && !SND.isEnabled()) { SND.setEnabled(true); soundLabel(); }
         };
-        document.addEventListener("pointerdown", wake, { once: true });
+        document.addEventListener("pointerup", wake, { once: true });
         document.addEventListener("keydown", wake, { once: true });
       }
     }
@@ -412,7 +414,9 @@
     function runPreloader() {
       if (!pre) return heroIntro();
       var rows = pre.querySelectorAll(".row");
-      setTimeout(function () { endPreloader(true); }, 12000);
+      /* last resort only: graceful (false), so even a wedged run slides out
+         and still gets the anatomy arrival; goReal's own stall exits win first */
+      setTimeout(function () { endPreloader(false); }, 15000);
       if (reduced || seen) {
         rows.forEach(function (r) { if (!r.hasAttribute("data-sample-row")) r.classList.add("on"); });
         setTimeout(function () { endPreloader(reduced); }, reduced ? 0 : 300);
@@ -493,12 +497,13 @@
         var exited = false;
         var lockedAt = 0;
         var labeled = false;
+        var gotStep = false;
 
-        function maybeExit(acc) {
+        function maybeExit(acc, force) {
           if (exited) return;
           var elapsed = performance.now() - t0;
           if (acc >= 0.85 && !lockedAt) lockedAt = elapsed;
-          if ((lockedAt && elapsed - lockedAt > 500) || elapsed > capMs) {
+          if (force || (lockedAt && elapsed - lockedAt > 500) || elapsed > capMs) {
             exited = true;
             /* the checkmark only claims what actually happened */
             if (convergedLabel && !lockedAt) {
@@ -515,6 +520,7 @@
         }
 
         TRAINER.on("step", function (d) {
+          gotStep = true;
           if (!labeled) {
             labeled = true;
             capMs = TRAINER.state().tier === "C" ? 7000 : 9000;
@@ -537,7 +543,10 @@
           if (d.headlineAcc !== undefined) maybeExit(d.headlineAcc);
         });
         startWhenReady("preloader");
-        setTimeout(function () { maybeExit(0); }, capMs + 3500);
+        /* a worker that reported ready but never steps is wedged; nobody
+           should watch a frozen bar for it (training keeps trying behind) */
+        setTimeout(function () { if (!gotStep) maybeExit(0, true); }, 6000);
+        setTimeout(function () { maybeExit(0); }, capMs + 2000);
       }
 
       var deciding = isHome && window.TRAINER && !reduced;

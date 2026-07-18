@@ -28,9 +28,31 @@ import * as THREE from "../vendor/three.module.min.js";
   function clamp01(v) { return Math.max(0, Math.min(1, v)); }
   function smoothstep(v) { v = clamp01(v); return v * v * (3 - 2 * v); }
 
+  /* THREE.Color cannot parse oklch(), which is how the altitude drift writes
+     the accent family; convert to hex here so the 3D layer keeps the dusk. */
+  function oklchToHex(L, C, H) {
+    var h = (H * Math.PI) / 180, a = C * Math.cos(h), b = C * Math.sin(h);
+    var l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+    var m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+    var s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+    var l = l_ * l_ * l_, m = m_ * m_ * m_, s = s_ * s_ * s_;
+    var out = [
+      4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+      -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+      -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+    ].map(function (c) {
+      c = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(Math.max(0, c), 1 / 2.4) - 0.055;
+      c = Math.max(0, Math.min(1, c));
+      return ("0" + Math.round(c * 255).toString(16)).slice(-2);
+    });
+    return "#" + out.join("");
+  }
+
   function cssColor(name) {
-    var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    return new THREE.Color(v || "#888888");
+    var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#888888";
+    var m = v.match(/^oklch\(\s*([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)/i);
+    if (m) v = oklchToHex(parseFloat(m[1]) * (m[2] ? 0.01 : 1), parseFloat(m[3]), parseFloat(m[4]));
+    return new THREE.Color(v);
   }
 
   function mode() {
