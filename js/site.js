@@ -155,6 +155,7 @@
 
     if (!reduced && typeof Lenis !== "undefined") {
       lenis = new Lenis({ autoRaf: false, lerp: 0.12 });
+      window.__lenis = lenis;
       lenis.on("scroll", ScrollTrigger.update);
       gsap.ticker.add(function (t) { lenis.raf(t * 1000); });
       gsap.ticker.lagSmoothing(0);
@@ -399,7 +400,13 @@
         yPercent: -100, duration: 0.55, ease: "power4.inOut",
         onComplete: function () { pre.classList.add("done"); }
       });
-      heroIntro();
+      /* the page assembles out of its own exploded diagram; the assembly IS
+         the intro, so the typed hero reveal stands down when it plays */
+      if (window.ANATOMY && ANATOMY.arriveEligible && ANATOMY.arriveEligible()) {
+        setTimeout(function () { if (!ANATOMY.arrive()) heroIntro(); }, 60);
+      } else {
+        heroIntro();
+      }
     }
 
     function runPreloader() {
@@ -1827,7 +1834,7 @@
 
       var CMDS = {
         help: function () {
-          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>model</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>sound on|off</span> · <span class='t-good'>grid</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>model</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>sound on|off</span> · <span class='t-good'>anatomy</span> · <span class='t-good'>grid</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
         },
         model: function (rest) {
           var v = (rest || "").trim().toLowerCase();
@@ -1926,6 +1933,15 @@
           var next = v === "on" ? true : v === "off" ? false : !SND.isEnabled();
           setSound(next);
           termPrint("sound: " + (next ? "on · synthesized live, nothing downloaded" : "off"), "t-good");
+        },
+        anatomy: function () {
+          if (window.ANATOMY && ANATOMY.supported) {
+            closeTerm();
+            ANATOMY.toggle();
+            termPrint("tearing the page into its eight layers · esc reassembles", "t-good");
+          } else {
+            termPrint("anatomy lives on the home page");
+          }
         },
         clear: function () { termOut.innerHTML = ""; },
         exit: function () { closeTerm(); }

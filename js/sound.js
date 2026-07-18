@@ -90,6 +90,19 @@ window.SOUND = (function () {
       if (!gate("train", 85)) return;
       blip(lossFreq(loss === null || loss === undefined ? 4.2 : loss), 0.07, "triangle", 0.02);
     },
+    /* a layer seating into the assembly: deep sheets thock low, the top
+       sheet lands highest, so a full assembly plays a rising chord */
+    seat: function (i, n) {
+      if (!gate("seat" + i, 120)) return;
+      var f = 130 * Math.pow(2, ((n - 1 - i) / Math.max(1, n)) * 1.35);
+      blip(f, 0.09, "triangle", 0.045);
+      blip(f / 2, 0.12, "sine", 0.03);
+    },
+    slide: function () {
+      if (!gate("slide", 200)) return;
+      blip(300, 0.05, "sine", 0.02);
+      blip(430, 0.07, "sine", 0.022, 0.05);
+    },
     chime: function () {
       if (!gate("chime", 600)) return;
       blip(659, 0.22, "sine", 0.05);

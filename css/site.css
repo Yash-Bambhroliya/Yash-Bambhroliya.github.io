@@ -836,6 +836,192 @@ footer a { color: var(--ink-2); }
   .colophon > div:last-child { border-bottom: 0; }
 }
 
+/* ---------- the exploded view: the page torn into its strata ---------- */
+
+.anatomy {
+  position: fixed;
+  inset: 0;
+  z-index: 240;
+  background: var(--paper);
+  perspective: 1700px;
+  display: none;
+  overflow: hidden;
+  touch-action: none;
+}
+.anatomy.on { display: block; }
+
+.anatomy .mono { font-family: var(--font-mono); }
+
+.an-stack {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.an-sheet {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: opacity var(--dur-2) var(--ease-out), filter var(--dur-2) var(--ease-out);
+}
+.an-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+  opacity: var(--sheet, 0);
+  pointer-events: none;
+}
+.an-sheet.dim { opacity: 0.3; filter: saturate(0.6); }
+.an-sheet.hot::before { border-color: var(--accent); }
+
+.an-chip {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 0.68rem;
+  opacity: var(--chipop, 0);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+}
+
+/* x-ray strata exist only while the page is apart; at rest the stage must
+   be indistinguishable from the real page beneath it */
+.an-frame, .an-tick, .an-wash, .an-grid, .an-data, .an-noscene { opacity: var(--xray, 0); }
+.anatomy.arriving .an-bom, .anatomy.arriving .an-hint { opacity: 0 !important; pointer-events: none !important; }
+
+.an-frame { position: absolute; inset: 26px; border: 1px solid var(--hairline); }
+.an-tick { position: absolute; width: 18px; height: 18px; }
+.an-tick::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--ink-3); }
+.an-tick::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; border-left: 1px solid var(--ink-3); }
+.an-wash { position: absolute; inset: 0; }
+.an-grid {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px) 0 0 / 100% 48px,
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px) 0 0 / 48px 100%;
+}
+.an-data {
+  position: absolute;
+  inset: 14% 9%;
+  font-size: 0.68rem;
+  line-height: 2;
+  color: var(--ink-3);
+  overflow: hidden;
+  letter-spacing: 0.03em;
+}
+.an-data .an-cid { color: var(--accent); }
+.an-noscene {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.an-title {
+  position: absolute;
+  left: 1.4rem;
+  bottom: 1.2rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border: 1px solid var(--hairline);
+  padding: 0.55rem 0.8rem;
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-out);
+  pointer-events: none;
+}
+.anatomy.apart .an-title { opacity: 1; }
+
+.an-bom {
+  position: absolute;
+  right: 1.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(21rem, 40vw);
+  border: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(6px);
+  font-size: 0.68rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease-out);
+}
+.anatomy.apart .an-bom { opacity: 1; pointer-events: auto; }
+.an-bom-h {
+  padding: 0.55rem 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--hairline);
+}
+.an-row {
+  display: grid;
+  grid-template-columns: 1.4rem 6.2rem 1fr auto;
+  gap: 0.6rem;
+  padding: 0.45rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--hairline) 55%, transparent);
+  cursor: pointer;
+  color: var(--ink-2);
+}
+.an-row:last-child { border-bottom: 0; }
+.an-row:hover, .an-row.on { background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--ink); }
+.an-row .an-n { color: var(--accent); }
+.an-row .an-kb { color: var(--ink-3); text-align: right; }
+.an-row.an-reader, .an-row.an-reader .an-n, .an-row.an-reader .an-kb { color: var(--accent-deep); cursor: default; }
+
+.an-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 1.35rem;
+  transform: translateX(-50%);
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-out);
+  pointer-events: none;
+}
+.anatomy.apart .an-hint { opacity: 0.85; }
+
+.an-pill {
+  position: fixed;
+  right: 1.3rem;
+  bottom: 1.2rem;
+  z-index: 90;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+.an-pill:hover { color: var(--ink); border-color: var(--accent); }
+body.demo-on .an-pill, body.anatomy-on .an-pill { opacity: 0; pointer-events: none; }
+
+@media (max-width: 56.25rem) {
+  .an-bom { display: none; }
+  .an-title { font-size: 0.6rem; }
+}
+
 /* ---------- sheet 404: the missing detail ---------- */
 
 .nf {
