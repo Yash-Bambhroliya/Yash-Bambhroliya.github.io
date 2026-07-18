@@ -101,10 +101,16 @@
         return r.json().then(function (data) { return { ok: r.ok, data: data }; });
       }).then(function (res) {
         busy = false;
-        if (!res.ok) { setStatus(res.data.error || "something went wrong", true); return; }
+        if (!res.ok) {
+          if (window.SOUND) SOUND.deny();
+          setStatus(res.data.error || "something went wrong", true);
+          return;
+        }
+        if (window.SOUND) SOUND.chime();
         applyReport(res.data);
       }).catch(function () {
         busy = false;
+        if (window.SOUND) SOUND.deny();
         setStatus("could not reach the fit service. if this is a local preview, it only runs on the deployed site.", true);
       });
     }

@@ -54,6 +54,7 @@
         var next = currentTheme() === "dark" ? "light" : "dark";
         root.setAttribute("data-theme", next);
         try { localStorage.setItem("theme", next); } catch (e) {}
+        if (window.SOUND) SOUND.tick();
       });
     }
 
@@ -87,7 +88,51 @@
         var cur = body.getAttribute("data-temp") || "0.7";
         var next = TEMPS[(TEMPS.indexOf(cur) + 1) % TEMPS.length];
         setTemp(next, false);
+        if (window.SOUND) SOUND.tick();
       });
+    }
+
+    /* ---------- sound: a synthesized kit, strictly opt-in ----------
+       The pill lives in the nav on wide screens; the terminal owns it
+       everywhere. A saved "on" cannot start audio by itself (autoplay
+       policy), so it waits for the first real gesture and wakes silently. */
+
+    var SND = window.SOUND || null;
+    var soundCtl = null;
+
+    function soundLabel() {
+      if (soundCtl) soundCtl.querySelector(".t-val").textContent = SND && SND.isEnabled() ? "on" : "off";
+    }
+
+    function setSound(v) {
+      if (!SND) return false;
+      SND.setEnabled(v);
+      soundLabel();
+      if (v) SND.open();
+      return SND.isEnabled();
+    }
+
+    if (SND) {
+      var navLinks = document.querySelector(".nav-links");
+      if (navLinks && toggle) {
+        soundCtl = document.createElement("button");
+        soundCtl.type = "button";
+        soundCtl.className = "temp-ctl sound-ctl";
+        soundCtl.setAttribute("aria-label", "Toggle interface sound");
+        soundCtl.innerHTML = 'sound <span class="t-val">off</span>';
+        navLinks.insertBefore(soundCtl, toggle);
+        soundCtl.addEventListener("click", function () { setSound(!SND.isEnabled()); });
+        soundLabel();
+      }
+      if (SND.saved()) {
+        var wake = function () {
+          document.removeEventListener("pointerdown", wake);
+          document.removeEventListener("keydown", wake);
+          if (SND && !SND.isEnabled()) { SND.setEnabled(true); soundLabel(); }
+        };
+        document.addEventListener("pointerdown", wake, { once: true });
+        document.addEventListener("keydown", wake, { once: true });
+      }
     }
 
     /* ---------- clock ---------- */
@@ -683,6 +728,7 @@
       function runDemo(mode, secs, aux, caps, onDone) {
         if (busy || !hasGsap) return;
         busy = true;
+        if (window.SOUND) SOUND.open();
         var st = { t: 0 };
         var lastCap = -1;
         var inspecting = false;
@@ -740,6 +786,7 @@
 
         function enterInspect() {
           inspecting = true;
+          if (window.SOUND) SOUND.tick();
           window.SCENE.inspectStart(mode === "orbitBall" ? "ball" : "net");
           capOn("yours now: drag to look around · scroll to zoom · return or esc to leave");
           if (onDone) onDone();
@@ -913,6 +960,8 @@
           : "from random noise to my name in " + secs + "s of cpu, right here in your browser. nothing prerendered, nothing sent anywhere.";
       }
 
+      var lastSnapIdx = -1;
+      var wasDone = false;
       function renderAtP(p) {
         lastP = p;
         var snaps = getSnaps();
@@ -920,10 +969,19 @@
         if (el.dot) el.dot.style.left = (p * 100).toFixed(2) + "%";
         if (!n) return;
         var t = Math.min(1, p / 0.9);
-        renderSnap(snaps[Math.min(n - 1, Math.round(t * (n - 1)))]);
+        var idx = Math.min(n - 1, Math.round(t * (n - 1)));
+        renderSnap(snaps[idx]);
+        /* each training moment is one note, pitched by its loss: scrubbing
+           the run downhill plays the model coming into tune */
+        if (idx !== lastSnapIdx) {
+          if (lastSnapIdx !== -1 && window.SOUND) SOUND.train(snaps[idx].loss);
+          lastSnapIdx = idx;
+        }
         var done = p > 0.93;
         section.classList.toggle("learn-done", done);
         if (done) el.endnote.textContent = endnote(snaps[n - 1]);
+        if (done && !wasDone && window.SOUND) SOUND.chime();
+        wasDone = done;
       }
 
       /* the pin exists from first paint so the page never shifts later */
@@ -1294,16 +1352,27 @@
       items.forEach(function (el) { io.observe(el); });
     }
 
-    /* masked line rise on section headings: flat, type never bends */
+    /* masked line rise on section headings: flat, type never bends.
+       Space Grotesk is a variable font, so the same trigger also settles
+       the weight from hairline to full: the ink arrives with the line. */
     if (!reduced) {
       document.fonts.ready.then(function () {
         document.querySelectorAll("[data-h2]").forEach(function (h) {
           try {
             var sp = new SplitText(h, { type: "lines", mask: "lines" });
+            var trig = { trigger: h, start: "top 88%", once: true };
             gsap.from(sp.lines, {
               yPercent: 110,
               duration: 0.9, ease: "power4.out", stagger: 0.08,
-              scrollTrigger: { trigger: h, start: "top 88%", once: true }
+              scrollTrigger: trig
+            });
+            var ink = { w: 340 };
+            gsap.to(ink, {
+              w: 700, duration: 1.15, ease: "power2.out",
+              scrollTrigger: trig,
+              onStart: function () { h.style.fontVariationSettings = '"wght" 340'; },
+              onUpdate: function () { h.style.fontVariationSettings = '"wght" ' + ink.w.toFixed(0); },
+              onComplete: function () { h.style.fontVariationSettings = ""; }
             });
           } catch (e) {}
         });
@@ -1505,6 +1574,7 @@
       var open = false;
 
       function setOpen(v) {
+        if (v && !open && window.SOUND) SOUND.open();
         open = v;
         dock.classList.toggle("open", v);
         if (!v) { spec.hidden = true; spec.innerHTML = ""; }
@@ -1733,6 +1803,7 @@
       var openTerm = function () {
         termOpen = true;
         term.classList.add("open");
+        if (window.SOUND) SOUND.open();
         if (!greeted) {
           greeted = true;
           termPrint('<span class="t-accent">yash-shell</span> · type <span class="t-good">help</span> to see commands');
@@ -1756,7 +1827,7 @@
 
       var CMDS = {
         help: function () {
-          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>model</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>grid</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
+          termPrint("commands: <span class='t-good'>about</span> · <span class='t-good'>work</span> · <span class='t-good'>evals</span> · <span class='t-good'>sample</span> · <span class='t-good'>model</span> · <span class='t-good'>train stats|stop|more</span> · <span class='t-good'>fit &lt;paste a job description&gt;</span> · <span class='t-good'>contact</span> · <span class='t-good'>temp 0|0.7|1.0</span> · <span class='t-good'>theme</span> · <span class='t-good'>sound on|off</span> · <span class='t-good'>grid</span> · <span class='t-good'>whoami</span> · <span class='t-good'>sudo hire</span> · <span class='t-good'>clear</span> · <span class='t-good'>exit</span>");
         },
         model: function (rest) {
           var v = (rest || "").trim().toLowerCase();
@@ -1849,6 +1920,13 @@
           try { localStorage.setItem("theme", next); } catch (e) {}
           termPrint("theme: " + next, "t-good");
         },
+        sound: function (rest) {
+          if (!SND) { termPrint("no audio engine in this browser"); return; }
+          var v = (rest || "").trim().toLowerCase();
+          var next = v === "on" ? true : v === "off" ? false : !SND.isEnabled();
+          setSound(next);
+          termPrint("sound: " + (next ? "on · synthesized live, nothing downloaded" : "off"), "t-good");
+        },
         clear: function () { termOut.innerHTML = ""; },
         exit: function () { closeTerm(); }
       };
@@ -1870,10 +1948,13 @@
         } else if (cmd === "sudo" && parts[1] === "hire") {
           termPrint("access granted.", "t-good");
           termPrint("drafting email to yashbambhroliya1@gmail.com ...");
+          if (window.SOUND) SOUND.chime();
           setTimeout(function () { window.location.href = "mailto:yashbambhroliya1@gmail.com?subject=Let's talk"; }, 700);
         } else if (CMDS[cmd]) {
+          if (window.SOUND) SOUND.tick();
           CMDS[cmd](rest);
         } else {
+          if (window.SOUND) SOUND.deny();
           termPrint("command not found: " + esc(cmd) + " · try <span class='t-good'>help</span>");
         }
       });
