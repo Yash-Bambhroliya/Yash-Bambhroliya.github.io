@@ -2718,3 +2718,82 @@ body[data-page="case"] .viz-title::before {
   .bezel, .hero-meta, .shared-banner, .halo { display: none; }
   body { background: #fff; color: #000; }
 }
+
+/* ---------- the click grammar: reticle cursor + verb + sonar ----------
+   Chrome lives in cursor.js. The ring trails the pointer; over anything
+   clickable it recedes and four brackets lock around the target; a small
+   verb names the action; clicks ping a sonar ring from the point of
+   contact. Keyboard focus gets the same brackets, snapped. */
+
+.c-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 300;
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-out),
+    width var(--dur-1) var(--ease-out), height var(--dur-1) var(--ease-out);
+  will-change: left, top;
+}
+body.cur-on .c-ring { opacity: 1; }
+
+.c-bk {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  pointer-events: none;
+  z-index: 301;
+  will-change: left, top;
+}
+.c-bk.b-tl { border-top: 1.5px solid var(--accent); border-left: 1.5px solid var(--accent); }
+.c-bk.b-tr { border-top: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); }
+.c-bk.b-bl { border-bottom: 1.5px solid var(--accent); border-left: 1.5px solid var(--accent); }
+.c-bk.b-br { border-bottom: 1.5px solid var(--accent); border-right: 1.5px solid var(--accent); }
+.c-bk.fb { transition: opacity var(--dur-1) var(--ease-out); }
+
+.c-verb {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 302;
+  font-family: "Cascadia Mono", ui-monospace, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--accent);
+  border-radius: 3px;
+  padding: 3px 8px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.c-verb.on { opacity: 1; transform: translateY(0); }
+
+.c-ping {
+  position: fixed;
+  pointer-events: none;
+  z-index: 258;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: c-ping 0.5s ease-out forwards;
+}
+@keyframes c-ping {
+  from { width: 10px; height: 10px; opacity: 0.85; }
+  to { width: 110px; height: 110px; opacity: 0; }
+}
+
+body.demo-on .c-ring, body.demo-on .c-bk, body.demo-on .c-verb { display: none; }
+@media print {
+  .c-ring, .c-bk, .c-verb, .c-ping { display: none; }
+}

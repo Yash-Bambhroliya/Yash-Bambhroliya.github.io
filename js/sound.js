@@ -103,6 +103,12 @@ window.SOUND = (function () {
       blip(300, 0.05, "sine", 0.02);
       blip(430, 0.07, "sine", 0.022, 0.05);
     },
+    /* the click grammar's confirmation thock */
+    press: function () {
+      if (!gate("press", 110)) return;
+      blip(190, 0.1, "triangle", 0.045);
+      blip(95, 0.13, "sine", 0.03);
+    },
     chime: function () {
       if (!gate("chime", 600)) return;
       blip(659, 0.22, "sine", 0.05);

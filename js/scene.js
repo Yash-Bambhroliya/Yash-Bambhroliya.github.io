@@ -527,6 +527,10 @@ import * as THREE from "../vendor/three.module.min.js";
         themeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
         S.ready = true;
+        /* first paint must already wear the theme: the materials above are
+           built with dark-mode defaults (additive bloom), and on paper the
+           light branch has to retint and reblend before anyone sees it */
+        self.refreshColors();
         S.t0 = performance.now();
         S.raf = requestAnimationFrame(loop);
         return Promise.resolve(true);
@@ -603,11 +607,13 @@ import * as THREE from "../vendor/three.module.min.js";
 
     setDims: function (dims) {
       if (!S.ready || !dims) return;
-      /* rebuild the net with the real trained dimensions */
+      /* rebuild the net with the real trained dimensions; the fresh
+         materials are dark-mode defaults, so re-theme them immediately */
       S.scene.remove(S.net);
       S.pulseMats = [];
       S.scene.add(buildNet(dims));
       buildCamPath();
+      this.refreshColors();
     },
 
     refreshColors: function () {

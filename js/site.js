@@ -1673,26 +1673,22 @@
       });
     }
 
-    /* ---------- cursor halo: a trailing ring, native cursor untouched ---------- */
+    /* ---------- external links leave in a new tab ----------
+       Capture phase, so the target is set before the browser reads it.
+       Delegation also covers links printed later (terminal, fit panel).
+       Same test the cursor verb uses for "visit": a different host. */
+    document.addEventListener("click", function (e) {
+      var a = e.target.closest && e.target.closest("a[href]");
+      if (!a || a.target) return;
+      if (a.protocol !== "http:" && a.protocol !== "https:") return;
+      if (a.host && a.host !== location.host) {
+        a.target = "_blank";
+        a.rel = a.rel ? a.rel + " noopener" : "noopener";
+      }
+    }, true);
 
-    if (fine && !reduced && hasGsap) {
-      var halo = document.createElement("div");
-      halo.className = "halo";
-      halo.setAttribute("aria-hidden", "true");
-      document.body.appendChild(halo);
-      var haloX = gsap.quickTo(halo, "x", { duration: 0.42, ease: "power3" });
-      var haloY = gsap.quickTo(halo, "y", { duration: 0.42, ease: "power3" });
-      var HOT = "a, button, input, textarea, select, [role=button], .lp";
-      window.addEventListener("pointermove", function (e) {
-        body.classList.add("halo-on");
-        haloX(e.clientX);
-        haloY(e.clientY);
-        halo.classList.toggle("hot", !!(e.target.closest && e.target.closest(HOT)));
-      }, { passive: true });
-      document.documentElement.addEventListener("pointerleave", function () {
-        body.classList.remove("halo-on");
-      });
-    }
+    /* ---------- cursor: the click grammar lives in cursor.js ----------
+       (reticle lock, verb label, magnet, press, sonar, focus brackets) */
 
     /* ---------- the house signature: text resolves out of noise ---------- */
 
@@ -1709,20 +1705,7 @@
       });
     }
 
-    /* ---------- magnetic ---------- */
-
-    if (fine && !reduced && hasGsap) {
-      document.querySelectorAll(".contact .email, .theme-toggle, .temp-ctl").forEach(function (el) {
-        var xTo = gsap.quickTo(el, "x", { duration: 0.35, ease: "power3" });
-        var yTo = gsap.quickTo(el, "y", { duration: 0.35, ease: "power3" });
-        el.addEventListener("pointermove", function (e) {
-          var r = el.getBoundingClientRect();
-          xTo((e.clientX - (r.left + r.width / 2)) * 0.3);
-          yTo((e.clientY - (r.top + r.height / 2)) * 0.3);
-        });
-        el.addEventListener("pointerleave", function () { xTo(0); yTo(0); });
-      });
-    }
+    /* ---------- magnetic: now handled by the click grammar (cursor.js) ---------- */
 
     /* ---------- case charts draw themselves as you arrive ---------- */
 

@@ -97,7 +97,7 @@
       state.corpusHash = hashString(corpus);
       var key = "gru-v1:" + state.corpusHash;
       return idbGet(key).then(function (saved) {
-        worker = new Worker("/js/train-worker.js?v=9");
+        worker = new Worker("/js/train-worker.js?v=10");
         worker.onerror = function (e) {
           try { console.error("[trainer] worker error:", e && e.message, e && e.filename, e && e.lineno); } catch (e2) {}
           state.eligible = false;
