@@ -75,15 +75,37 @@ window.ANATOMY = (function () {
 
   /* ---------- stage construction ---------- */
 
+  /* clones leave their ancestors behind, so scoped CSS stops matching;
+     every computed text and box style is inlined to keep the copy exact */
+  var COPY = ["font-family", "font-size", "font-weight", "font-style", "line-height",
+    "letter-spacing", "text-transform", "color", "text-align", "white-space",
+    "text-decoration", "font-variant-numeric", "display", "align-items",
+    "justify-content", "flex-direction", "flex-wrap", "gap", "padding", "border",
+    "border-radius", "background-color", "opacity", "overflow", "fill", "stroke"];
+
+  function styleClone(src) {
+    var c = src.cloneNode(true);
+    var a = [src], b = [c], i = 0;
+    while (i < a.length) {
+      var s = a[i], d = b[i]; i++;
+      if (s.nodeType !== 1 || !d) continue;
+      var cs = getComputedStyle(s);
+      var css = "";
+      for (var j = 0; j < COPY.length; j++) css += COPY[j] + ":" + cs.getPropertyValue(COPY[j]) + ";";
+      d.style.cssText = css + d.style.cssText;
+      d.removeAttribute("id");
+      for (var k = 0; k < s.children.length; k++) { a.push(s.children[k]); b.push(d.children[k]); }
+    }
+    return c;
+  }
+
   function snapInto(sheet, selectors) {
     selectors.forEach(function (sel) {
       document.querySelectorAll(sel).forEach(function (el) {
         var r = el.getBoundingClientRect();
         if (!r.width || !r.height || r.bottom < -40 || r.top > window.innerHeight + 40) return;
-        var c = el.cloneNode(true);
-        c.removeAttribute("id");
-        c.querySelectorAll("[id]").forEach(function (n) { n.removeAttribute("id"); });
-        c.style.cssText = "position:absolute;margin:0;left:" + r.left + "px;top:" + r.top +
+        var c = styleClone(el);
+        c.style.cssText += ";position:absolute;margin:0;left:" + r.left + "px;top:" + r.top +
           "px;width:" + r.width + "px;height:" + r.height + "px;pointer-events:none;";
         sheet.appendChild(c);
       });
@@ -106,12 +128,16 @@ window.ANATOMY = (function () {
       var sh = document.createElement("div");
       sh.className = "an-sheet an-l" + (i + 1);
       sh.setAttribute("data-i", i);
+      /* flat paint order must match the strata: deep sheets first in the
+         DOM, instruments last, so at rest nothing hides behind the scene */
+      sh.style.zIndex = String(N - i);
       var chip = document.createElement("div");
       chip.className = "an-chip mono";
       chip.textContent = i + 1;
       sh.appendChild(chip);
       chips.push(chip);
-      stack.appendChild(sh);
+      if (stack.firstChild) stack.insertBefore(sh, stack.firstChild);
+      else stack.appendChild(sh);
       sheets.push(sh);
       Z.push(0); V.push(0); seated.push(true);
     }
@@ -202,7 +228,10 @@ window.ANATOMY = (function () {
     for (var i = 0; i < N; i++) {
       var lag = i * 0.045;
       var tl = Math.max(0, Math.min(1, (t - lag) / (1 - lag)));
-      var z = ((N - 1) / 2 - i) * a.gap * tl;
+      /* the resting ladder: 0.6px per stratum is invisible at this
+         perspective but keeps depth sorting honest while springs settle,
+         so the terrain's occluder can never paint over the type */
+      var z = ((N - 1) / 2 - i) * a.gap * tl + (N - 1 - i) * 0.6;
       if (inspecting >= 0) z += i === inspecting ? 330 : -70;
       out.push(z);
     }
@@ -238,6 +267,9 @@ window.ANATOMY = (function () {
       sheets[i].classList.toggle("dim", inspecting >= 0 && inspecting !== i);
     }
     stage.classList.toggle("apart", state.t > 0.35);
+    /* at rest the stack leaves 3D: composited layers (the live canvas)
+       cannot out-sort the type when paint order is plain z-index */
+    stage.classList.toggle("flat", state.t < 0.035 && inspecting < 0);
     if (arriving && allSeated && state.t < 0.01) finishArrival();
   }
 

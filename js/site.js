@@ -500,6 +500,12 @@
           if (acc >= 0.85 && !lockedAt) lockedAt = elapsed;
           if ((lockedAt && elapsed - lockedAt > 500) || elapsed > capMs) {
             exited = true;
+            /* the checkmark only claims what actually happened */
+            if (convergedLabel && !lockedAt) {
+              convergedLabel.textContent = TRAINER.restored()
+                ? "checkpoint restored · rendering site"
+                : "still learning · rendering site";
+            }
             rows[rows.length - 1].classList.add("on");
             /* fresh models keep learning in the background; a restored
                checkpoint has done its time (resume with: train more) */
@@ -513,6 +519,11 @@
             labeled = true;
             capMs = TRAINER.state().tier === "C" ? 7000 : 9000;
             rows[1].firstChild.nodeValue = (TRAINER.restored() ? "resuming checkpoint gru-" : "training gru-") + Math.round(TRAINER.state().params / 1000) + "k ";
+            /* a resumed checkpoint is past its epochs; count steps instead */
+            if (TRAINER.restored() && rows[2]) {
+              rows[2].childNodes[0].nodeValue = "step ";
+              if (rows[2].childNodes[2]) rows[2].childNodes[2].nodeValue = " · loss ";
+            }
           }
           /* preloader telemetry (keeps running post-reveal for widget/footer) */
           if (!exited) {
@@ -520,7 +531,7 @@
             var filled = Math.round(p * CELLS);
             if (barEl) barEl.textContent = "█".repeat(filled) + "░".repeat(CELLS - filled);
             if (lossEl) lossEl.textContent = d.emaLoss === null ? "measuring" : d.emaLoss.toFixed(3);
-            if (epochEl) epochEl.textContent = String(d.epoch);
+            if (epochEl) epochEl.textContent = TRAINER.restored() ? (d.step || 0).toLocaleString("en-US") : String(d.epoch);
             if (sampleEl && d.headlineSample) renderMorphInto(sampleEl, d.headlineSample);
           }
           if (d.headlineAcc !== undefined) maybeExit(d.headlineAcc);
@@ -548,7 +559,7 @@
         });
         if (TRAINER.decided()) {
           clearTimeout(deadline);
-          TRAINER.eligible() ? (TRAINER.restored() ? goRestored() : goReal()) : goFake();
+          TRAINER.eligible() ? goReal() : goFake();
         }
       } else {
         goFake();

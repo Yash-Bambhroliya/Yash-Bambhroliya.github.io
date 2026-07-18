@@ -857,6 +857,7 @@ footer a { color: var(--ink-2); }
   inset: 0;
   transform-style: preserve-3d;
 }
+.anatomy.flat .an-stack, .anatomy.flat .an-sheet { transform-style: flat; }
 
 .an-sheet {
   position: absolute;
